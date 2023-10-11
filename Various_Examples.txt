@@ -1,0 +1,940 @@
+ draw    rombo ******************************************
+
+canvas.Clear();
+                            // var filter = SKImageFilter.CreateDistantLitDiffuse(new SKPoint3(0, 0, 50), SKColors.White, 1.0f,1.0f);
+using (var paint = new SKPaint())
+                            {
+                                paint.IsAntialias = true;
+                                paint.Color = new SKColor(0x2c, 0x3e, 0x50);
+                                paint.StrokeCap = SKStrokeCap.Round;
+                                //   paint.ImageFilter = filter;
+
+                                using (var path = new SKPath())
+                                {
+                                    path.MoveTo(71.4311121f, 56f);
+                                    path.CubicTo(68.6763107f, 56.0058575f, 65.9796704f, 57.5737917f, 64.5928855f, 59.965729f);
+                                    path.LineTo(43.0238921f, 97.5342563f);
+                                    path.CubicTo(41.6587026f, 99.9325978f, 41.6587026f, 103.067402f, 43.0238921f, 105.465744f);
+                                    path.LineTo(64.5928855f, 143.034271f);
+                                    path.CubicTo(65.9798162f, 145.426228f, 68.6763107f, 146.994582f, 71.4311121f, 147f);
+                                    path.LineTo(114.568946f, 147f);
+                                    path.CubicTo(117.323748f, 146.994143f, 120.020241f, 145.426228f, 121.407172f, 143.034271f);
+                                    path.LineTo(142.976161f, 105.465744f);
+                                    path.CubicTo(144.34135f, 103.067402f, 144.341209f, 99.9325978f, 142.976161f, 97.5342563f);
+                                    path.LineTo(121.407172f, 59.965729f);
+                                    path.CubicTo(120.020241f, 57.5737917f, 117.323748f, 56.0054182f, 114.568946f, 56f);
+                                    path.LineTo(71.4311121f, 56f);
+                                    path.Close();
+                                    canvas.DrawPath(path, paint);
+                                    //canvas.DrawBitmap(procbitmap, info.Rect, paint);
+                                }
+                                curfilter = FilterType.Filtertypes.none;
+                            }
+							
+							
+draw    rombo ******************************************
+
+
+
+************************************************************
+I display a rect    and create magnifier   on this 
+to useit in the app  i MUST  display a CROPP rect  and the user  coice whre int image , the magnifier   will aplly 
+
+SKImageInfo argsinfo = args.Info;
+                           // mysize = canvas.DeviceClipBounds;
+                            canvas.Clear(SKColors.Gray);
+                            //canvas.DrawBitmap(USerskbitmap, canvas.DeviceClipBounds); // first display image into the bitmapRect -check
+
+                            // Calculate rectangle for displaying bitmap
+                            float scale = Math.Min((float)argsinfo.Width / USerskbitmap.Width, (float)argsinfo.Height / USerskbitmap.Height); //   real NOt of canvas
+
+                            float wx = (argsinfo.Width - scale * USerskbitmap.Width) / 2;
+                            float wy = (argsinfo.Height - scale * USerskbitmap.Height) / 2;
+                            SKRect magrect = new SKRect(0,0,USerskbitmap.Width,  USerskbitmap.Height); 
+                            CroppingRectangle croppingRect = new CroppingRectangle(magrect);
+                           
+
+                            // Calculate a matrix transform for displaying the cropping rectangle
+                            SKMatrix bitmapScaleMatrix = SKMatrix.CreateIdentity();
+                            bitmapScaleMatrix.SetScaleTranslate(scale, scale, wx, wy);
+
+                            SKRect finaRect = bitmapScaleMatrix.MapRect(croppingRect.Rect);
+                            
+                           
+                            using (var filterMag = SKImageFilter.CreateMagnifier(finaRect, 5)) //50
+                            //using (var filter = SKImageFilter.CreateBlur(2, 2, filterMag)) // double filter
+                           
+                            using (var paint = new SKPaint())
+                            {
+                                paint.ImageFilter = filterMag;
+                                canvas.DrawBitmap(USerskbitmap, myframe,paint); //   filter aplly to canvas NOT To USerskbitmap
+                            }
+                           
+                            canvas.DrawRect(finaRect, PenRed); // draw first rect
+                            snapshot = surface.Snapshot().Encode(); // for down load  file
+                            curfilter = FilterType.Filtertypes.none;
+                            break;
+
+                        }
+
+
+END ***********************************************************
+
+*****************start   
+    /* zografizri 3 tetragona
+                            var size = ((float)height > width ? width : height) * 0.5f;
+                                var center = new SKPoint((width - size) / 2f, (height - size) / 2f);
+
+                                // draw these at specific locations
+                                var leftRect = SKRect.Create(center.X - size / 2f, center.Y, size, size);
+                                    var rightRect = SKRect.Create(center.X + size / 2f, center.Y, size, size);
+
+                            // draw this at the current location / transformation
+                        var rotatedRect = SKRect.Create(0f, 0f, size, size);
+
+                        using (var paint = new SKPaint())
+                    {
+                    paint.IsAntialias = true;
+                    canvas.Clear();
+
+                    // draw
+                    paint.Color = SKColor.FromHsl(20, 99, 93);
+                    canvas.DrawRect(leftRect, paint);
+
+                    // save
+                    canvas.Save();
+
+                    // transform
+                    canvas.Translate(width / 2f, center.Y);
+                    canvas.RotateDegrees(45);
+
+                        // draw
+                        paint.Color = SKColor.FromHsl(110, 10, 23);
+                        canvas.DrawRoundRect(rotatedRect, 10, 10, paint);
+
+                        // undo transform / restore
+                            canvas.Restore();
+
+                            // draw
+                            paint.Color = SKColor.FromHsl(10, 140, 23);
+                            canvas.DrawRect(rightRect, paint);
+                            }
+
+                            */
+							
+end **************************************
+
+
+***********start*******************************
+  /* zografofize mia sfara
+                            var ltColor = SKColors.White;
+                            var dkColor = SKColors.Black;
+
+                        using (var paint = new SKPaint())
+                        {
+                        paint.IsAntialias = true;
+                            using (var shader = SKShader.CreateLinearGradient(
+        new SKPoint(0, 0),
+        new SKPoint(0, height),
+        new[] { ltColor, dkColor },
+        null,
+                            SKShaderTileMode.Clamp))
+                            {
+
+                            paint.Shader = shader;
+                            canvas.DrawPaint(paint);
+    }
+    }
+
+    // Center and Scale the Surface
+    var scale = (width < height ? width : height) / (240f);
+    canvas.Translate(width / 2f, height / 2f);
+    canvas.Scale(scale, scale);
+                canvas.Translate(-128, -128);
+
+                using (var paint = new SKPaint())
+                {
+                paint.IsAntialias = true;
+                using (var shader = SKShader.CreateTwoPointConicalGradient(
+                new SKPoint(115.2f, 102.4f),
+          25.6f,
+            new SKPoint(102.4f, 102.4f),
+    128.0f,
+    new[] { ltColor, dkColor },
+    null,
+    SKShaderTileMode.Clamp
+            ))
+            {
+            paint.Shader = shader;
+
+            canvas.DrawOval(new SKRect(51.2f, 51.2f, 204.8f, 204.8f), paint);
+                            }
+                            }
+
+                            */
+				
+				
+END**************************************************
+
+
+***  START ****************
+kanei thn image se 3 allles    --   maktrosteni -- konto  ktl -    kalo gia transformation
+  using (var bitmap = USerskbitmap)
+                            {
+                                var patchCenter = new SKRectI(33, 33, 256 - 33, 256 - 33);
+                                int width = 600; //         
+                                int height = 600;
+                                // 2x3 for portrait, or 3x2 for landscape
+                                var land = width > height;
+                                var min = land ? Math.Min(width / 3f, height / 2f) : Math.Min(width / 2f, height / 3f);
+                                var wide = SKRect.Inflate(SKRect.Create(0, land ? min : (min * 2f), min * 2f, min), -20, -20);
+                                var tall = SKRect.Inflate(SKRect.Create(land ? (min * 2f) : min, 0, min, min * 2f), -20, -20);
+                                var square = SKRect.Inflate(SKRect.Create(0, 0, min, min), -20, -20);
+                                var text = SKRect.Create(land ? min : 0, land ? 0 : min, min, min / 5f);
+                                text.Offset(text.Width / 2f, text.Height * 1.5f);
+                                text.Right = text.Left;
+
+                                // draw the bitmaps
+                                canvas.DrawBitmapNinePatch(bitmap, patchCenter, square);
+                                canvas.DrawBitmapNinePatch(bitmap, patchCenter, tall);
+                                canvas.DrawBitmapNinePatch(bitmap, patchCenter, wide);
+
+                                // describe what we see
+                                using (var paint = new SKPaint())
+                                {
+                                    paint.IsAntialias = true;
+                                    paint.TextAlign = SKTextAlign.Center;
+                                    paint.TextSize = text.Height * 0.75f;
+
+                                    canvas.DrawText("The corners", text.Left, text.Top, paint);
+                                    text.Offset(0, text.Height);
+                                    canvas.DrawText("should always", text.Left, text.Top, paint);
+                                    text.Offset(0, text.Height);
+                                    canvas.DrawText("be square", text.Left, text.Top, paint);
+                                }
+                            }
+
+
+END *******************
+
+*****************start    brightness ..  its works but very slow
+
+int addpix = 60;
+                            canvas.Clear();
+
+                            for (int xx = 0; xx < USerskbitmap.Width; xx++)
+                            {
+                                for (int yy = 0; yy < USerskbitmap.Height; yy++)  // very slow
+                                {
+                                    var pixel = USerskbitmap.GetPixel(xx, yy);
+
+                                    var red =pixel.Red+ addpix;
+                                    if (red < 0) red = 0;
+                                    if (red >255 ) red = 255;
+
+                                    var green = pixel.Green +addpix;
+                                    if (green < 0) green = 0;
+                                    if (green > 255) green = 255;
+
+                                    var blue = pixel.Blue+ addpix;
+                                    if (blue < 0) blue = 0;
+                                    if (blue > 255) blue = 255;
+
+                                    //var alpha = pixel.Alpha;
+                                    
+                                    var newPixel = new SKColor((byte)red, (byte)green, (byte)blue);
+                                    USerskbitmap.SetPixel(xx, yy, newPixel);  // USerskbitmap aaffect by double loop
+                                }
+                            }
+
+                            canvas.DrawBitmap(USerskbitmap, myframe);
+                            curfilter = FilterType.Filtertypes.none;
+END  *********
+
+
+
+**************************
+???????
+
+                                SKColor[] arc = new SKColor[3] { SKColors.Red, SKColors.Gray, SKColors.Blue };
+                                using (SKShader shader = SKShader.CreateLinearGradient(new SKPoint(0, 0), new SKPoint(100, 100), arc, SKShaderTileMode.Clamp))
+                                using (SKColorFilter f1 =  ApplyPastel()) 
+                                using (SKShader f2 = SKShader.CreateColorFilter(shader, f1))
+                                using (var paint = new SKPaint())
+                                {
+                                    paint.Shader = f2;
+                                    canvas.DrawBitmap(USerskbitmap, myframe, paint);
+                                   // canvas.DrawRect(region, PenRed);
+                                }
+
+
+
+
+end**********
+
+
+
+
+****************************************************  Apply 3 filter in the image
+ try
+                            {
+                                float[] colorMatrix =
+                               {
+                                    0.5f, 0.5f, 0.5f, 0, 0,
+                                    0.5f, 0.5f, 0.5f, 0, 0,
+                                    0.5f, 0.5f, 0.5f, 0, 0,
+                                    0,    0   , 0,    1, 0 
+                       };
+
+
+                                canvas.Clear(SKColors.White);
+
+                                // Load the image to be sketched.
+                                SKBitmap image = USerskbitmap.Copy();
+                                SKPaint paint = new SKPaint();
+
+                                var filter = SKImageFilter.CreateBlur(4, 4); 
+                                paint.ImageFilter = filter;  // first paint 
+                                                             // canvas.DrawBitmap(image,myframe,  paint);
+                                                             //canvas.Save();
+                                                             // Apply a color filter to the canvas.
+
+                                SKColorFilter grayFilter = SKColorFilter.CreateColorMatrix(colorMatrix);
+                                paint.ColorFilter = grayFilter;  // secont paint 
+
+
+
+                                paint.ColorFilter = ApplyPastel();  // 3 paint 
+
+                              //  paint.ImageFilter = SKImageFilter.CreateAlphaThreshold(region, 0.123f, 1.434f);
+                                canvas.DrawBitmap(image, myframe, paint);  // final display 
+
+                                // Save the sketch-like image to a file.
+                             
+
+
+
+
+
+
+                                
+                            
+
+                                
+                                snapshot = surface.Snapshot().Encode(); // for down load  file
+                                curfilter = FilterType.Filtertypes.none;
+                            }
+                            catch (Exception er) { ErrorMessage = er.Message + "  sketch1"; }
+
+
+
+end*******************************************************
+
+
+
+***************************start   kanei sketch   alla oxi oraio
+
+
+                                IntPtr pixelsAddr = image.GetPixels();
+                                int width = image.Width;
+                                int height = image.Height;
+
+                                // Get the bytes per pixel
+                                int bytesPerPixel = image.BytesPerPixel;
+
+unsafe
+                                {
+                                    byte* mypixels = (byte*)pixelsAddr;
+                                    for (int y = 0; y < height; y++)
+                                    {
+                                        for (int x = 0; x < width; x++)
+                                        {
+                                            // Get the pixel color
+                                            byte r = mypixels[(y * width + x) * bytesPerPixel];
+                                            byte g = mypixels[(y * width + x) * bytesPerPixel + 1];
+                                            byte b = mypixels[(y * width + x) * bytesPerPixel + 2];
+                                            //  byte a = mypixels[(y * width + x) * bytesPerPixel + 3];
+
+                                            // Convert the RGB color to grayscale using the formula: grayscale = 0.2989 * r + 0.5870 * g + 0.1140 * b
+                                            byte grayscale = (byte)(0.2989 * r + 0.5870 * g + 0.1140 * b);
+
+                                            var newbyte = (byte)(255 - r) + (255 - g) + (255 - b);
+                                           // var newbyte = (byte)(55 - r) + (155 - g) + (94 - b);  ok 
+                                           // var newbyte = (byte)(95 - r+g) + (155 - g) + (94 - b);   OK 
+
+                                           // var newbyte = (byte)(255 + r) + (255 + g) + (255 + b);
+                                            // Invert the grayscale value
+                                            byte inverted = (byte)(255-newbyte);
+
+                                            // Set the new RGB values to the inverted grayscale value
+                                            mypixels[(y * width + x) * bytesPerPixel] = inverted;
+                                            mypixels[(y * width + x) * bytesPerPixel + 1] = inverted;
+                                            mypixels[(y * width + x) * bytesPerPixel + 2] = inverted;
+
+                                            // Set the alpha value to 255 (fully opaque)
+                                            //    mypixels[(y * width + x) * bytesPerPixel + 3] = 255;
+                                        }
+                                    }
+                                }
+END *********************************
+
+************************start     san aktinografia 
+
+
+canvas.Clear();
+                            var brightnessIncrease = 100;
+
+                            var imageInfo = USerskbitmap.Info;
+                            var colorType = imageInfo.ColorType;
+
+
+                            if (colorType == SKColorType.Rgba8888 || colorType == SKColorType.RgbaF16 || colorType == SKColorType.Bgra8888)
+                            {
+                                // Read pixels from unmanaged memory to set luminance
+                                // https://docs.microsoft.com/en-us/xamarin/xamarin-forms/user-interface/graphics/skiasharp/bitmaps/pixel-bits
+
+
+
+                                IntPtr pixelsAddr = USerskbitmap.GetPixels();
+                                // Get the image dimensions
+                                int width = USerskbitmap.Width;
+                                int height = USerskbitmap.Height;
+
+                                // Get the bytes per pixel
+                                int bytesPerPixel = USerskbitmap.BytesPerPixel;
+                                float contrastIncrease = 3.5f;
+
+                                // Calculate the contrast formula variables
+                                //float factor = (259 * (contrastIncrease + 255)) / (255 * (259 - contrastIncrease));
+                                // float bias = 128 * (1 - factor);
+
+                                float contrastFactor = 1.9f;
+
+                                // Define the mid-point of the contrast adjustment (in the range 0-255)
+                                byte midPoint = 127;
+                                // Process the pixels
+                                unsafe
+                                {
+                                    byte* mypixels = (byte*)pixelsAddr;
+                                    for (int y = 0; y < height; y++)
+                                    {
+                                        for (int x = 0; x < width; x++)
+                                        {
+                                            // Get the pixel color
+                                            byte b = mypixels[(y * width + x) * bytesPerPixel];
+                                            byte g = mypixels[(y * width + x) * bytesPerPixel + 1];
+                                            byte r = mypixels[(y * width + x) * bytesPerPixel + 2];
+                                            //  byte a = mypixels[(y * width + x) * bytesPerPixel + 3];
+
+                                            // Convert the RGB color to grayscale using the formula: grayscale = 0.2989 * r + 0.5870 * g + 0.1140 * b
+                                            byte grayscale = (byte)(0.2989 * r + 0.5870 * g + 0.1140 * b);
+
+                                            // Invert the grayscale value
+                                            byte inverted = (byte)(255 - grayscale);
+
+                                            // Set the new RGB values to the inverted grayscale value
+                                            mypixels[(y * width + x) * bytesPerPixel] = inverted;
+                                            mypixels[(y * width + x) * bytesPerPixel + 1] = inverted;
+                                            mypixels[(y * width + x) * bytesPerPixel + 2] = inverted;
+
+                                            // Set the alpha value to 255 (fully opaque)
+                                            //    mypixels[(y * width + x) * bytesPerPixel + 3] = 255;
+                                        }
+                                    }
+                                }
+                                canvas.DrawBitmap(USerskbitmap, myframe);
+                                curfilter = FilterType.Filtertypes.none;
+                            }
+
+
+
+end ******************************************  san aktinografia 
+
+
+
+
+
+
+
+
+
+
+
+***************edge *************************
+
+
+case FilterType.Filtertypes.edge:  
+                        {
+                            canvas.Clear(SKColors.White);
+
+                            SKBitmap image = USerskbitmap.Copy();
+                            SKPaint paint = new SKPaint();
+
+                            IntPtr pixelsAddr = image.GetPixels();
+                            int width = image.Width;
+                            int height = image.Height;
+
+                            // Get the bytes per pixel
+                            int bytesPerPixel = image.BytesPerPixel;
+                            bool keeporiginal = false;
+                            unsafe
+                            {
+                                byte* mypixels = (byte*)pixelsAddr;
+                                for (int y = 1; y < height; y++)
+                                {
+                                    for (int x = 1; x < width; x++)
+                                    {
+                                        // Get the pixel color
+                                        byte b = mypixels[(y * width + x) * bytesPerPixel];
+                                        byte g = mypixels[(y * width + x) * bytesPerPixel + 1];
+                                        byte r = mypixels[(y * width + x) * bytesPerPixel + 2];
+                                        byte a = mypixels[(y * width + x) * bytesPerPixel + 3];
+                                        
+                                        int dx = 0, dy = 0;
+                                        dx = (int)(r * .3 + g * .59 + b * 0.11 - (r * .3 + g * .59 + b * 0.11));
+                                        dy = (int)(r * .3 + g * .59 + b * 0.11 - (a * .3 + g * .59 + b * 0.11));
+
+                                        double power = Math.Sqrt(dx * dx + dy * dy);
+                                        if (power > 50)
+                                        {
+
+                                            mypixels[(y * width + x) * bytesPerPixel] = 80;
+                                            mypixels[(y * width + x) * bytesPerPixel + 1] = 99;
+                                            mypixels[(y * width + x) * bytesPerPixel + 2] = 2;
+
+                                        }
+                                        else
+                                        {
+                                            if (!keeporiginal)
+                                            {
+                                                mypixels[(y * width + x) * bytesPerPixel] = 0;
+                                                mypixels[(y * width + x) * bytesPerPixel + 1] = 0;
+                                                mypixels[(y * width + x) * bytesPerPixel + 2] = 0;
+                                            }
+                                            else
+                                            {
+                                                var newColor = (byte)(r * 0.3 + g * 0.59 + b * 0.11);
+                                                mypixels[(y * width + x) * bytesPerPixel] = newColor;
+                                                mypixels[(y * width + x) * bytesPerPixel + 1] = newColor;
+                                                mypixels[(y * width + x) * bytesPerPixel + 2] = newColor;
+                                            }
+
+                                            
+                                        }
+                                    }
+                                }
+                            }
+
+                            canvas.DrawBitmap(image, myframe);
+                            snapshot = surface.Snapshot().Encode(); // for down load  file
+                            break;
+                        }
+
+
+
+
+
+end egge**************************************
+
+
+
+
+
+
+
+
+
+
+***************edge prospathia 1*************************
+case FilterType.Filtertypes.edge: 
+                        {
+                            unsafe  //  https://github.com/mono/SkiaSharp/issues/958
+                            {
+                                //var res = USerskbitmap.Copy();
+                               // var span = new Span<SKColor>((void*)res.GetPixels(out var length), (int)length);
+
+                                // var asa=span.
+
+
+                                /*
+                                for (var i = 0; i < span.Length; i++)
+                                    {
+                                    var colorR = span.
+                                    var colorG = r.ReadByte();
+                                    var colorB = r.ReadByte();
+                                    var colorA = r.ReadByte();
+                                    span[i] = new SKColor(colorR, colorG, colorB, colorA);
+                            }
+                            */
+                            }
+
+                            //  var span =new Span<SKColor>(res)
+
+                            canvas.Clear(SKColors.White);
+                            bool keeporiginal = false;
+                            SKPixmap pmap = USerskbitmap.PeekPixels();
+                            SKBitmap image=new SKBitmap(USerskbitmap.Width,USerskbitmap.Height);
+
+                            IntPtr pixelsAddr = image.GetPixels(); //  check pmap
+                                                                   // Get the number of bytes per pixel
+                            int bytesPerPixel = pmap.Info.BytesPerPixel;
+                            unsafe
+                            {
+                                byte* ptr = (byte*)pixelsAddr.ToPointer();
+
+
+                                for (int i = 0; i < image.Height; i++)
+                                {
+                                    for (int j = 0; j < image.Width; j++)
+                                    {
+                                        // int index = (i * pmap.Info.RowBytes) + (j * bytesPerPixel);
+
+
+                                        SKColor cr = pmap.GetPixelColor(i + 1, j);
+                                        SKColor cl = pmap.GetPixelColor(i - 1, j);
+                                        SKColor cu = pmap.GetPixelColor(i, j - 1);
+                                        SKColor cd = pmap.GetPixelColor(i, j + 1);
+
+                                        //var arrr1 = pmap.GetPixels(i, j);
+                                        int dx = 0;
+                                        int dy = 0;
+                                        dx = (int)(cr.Red * .3 + cr.Green * .59 + cr.Blue * 0.11 - (cl.Red * .3 + cl.Green * .59 + cl.Blue * 0.11));
+                                        dy = (int)(cd.Red * .3 + cd.Green * .59 + cd.Blue * 0.11 - (cu.Red * .3 + cu.Green * .59 + cu.Blue * 0.11));
+                                        double power = Math.Sqrt(dx * dx + dy * dy);
+                                        if (power > 50)
+                                        {
+                                            SKColor c = SKColors.Black; //   outline
+                                                                        //image.SetPixel(i, j, c);
+                                            //pmap.Erase(SKColors.Black);
+
+                                            *ptr++ = (byte)(25);   // red
+                                            *ptr++ = (byte)(95);             // green
+                                            *ptr++ = (byte)(100);   // blue
+                                            *ptr++ = 0xFF;          // alpha
+
+                                        }
+                                        else
+                                        {
+                                            if (!keeporiginal)
+                                            {
+                                                SKColor c1 = SKColors.DimGray; // to adeio meros
+                                               // image.SetPixel(i, j, c1);
+                                                *ptr++ = (byte)(5);   // red
+                                                *ptr++ = (byte)(9);             // green
+                                                *ptr++ = (byte)(9);   // blue
+                                                *ptr++ = 0xFF;          // alpha
+
+                                            }
+                                            else
+                                            {
+                                                SKColor currentcolor = USerskbitmap.GetPixel(i, j);
+                                                image.SetPixel(i, j, currentcolor);
+                                                //pmap.SetPixelColor
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+							  canvas.DrawBitmap(image, myframe);
+                            snapshot = surface.Snapshot().Encode(); // for down load  file
+                            break;
+                        }
+
+
+END ***************edge prospathia 1*************************
+
+***********start 
+case FilterType.Filtertypes.edge: 
+                        {
+                            //  https://github.com/mono/SkiaSharp/issues/958
+
+                            canvas.Clear(SKColors.White);
+
+
+
+                            bool keeporiginal = false;
+                            SKPixmap pmap = USerskbitmap.PeekPixels();
+                            SKBitmap image=new SKBitmap(USerskbitmap.Width,USerskbitmap.Height);
+
+                            //  IntPtr pixelsAddr = USerskbitmap.GetPixels(); //  check pmap
+                            // Get the number of bytes per pixel
+                            //int bytesPerPixel = pmap.Info.BytesPerPixel;
+                            byte[,,] buffer = new byte[USerskbitmap.Width, USerskbitmap.Height, 4];
+                            unsafe
+                            {
+
+
+
+                                for (int rep = 0; rep < 1; rep++)
+                                {
+                                    for (int i = 0; i < image.Width; i++)
+                                    {
+                                        for (int j = 0; j < image.Height; j++)
+                                        {
+                                            col=j;
+                                            row = i;
+                                            SKColor cr = pmap.GetPixelColor(i + 1, j);
+                                            SKColor cl = pmap.GetPixelColor(i - 1, j);
+                                            SKColor cu = pmap.GetPixelColor(i, j - 1);
+                                            SKColor cd = pmap.GetPixelColor(i, j + 1);
+
+                                            int dx = 0;
+                                            int dy = 0;
+                                            dx = (int)(cr.Red * .3 + cr.Green * .59 + cr.Blue * 0.11 - (cl.Red * .3 + cl.Green * .59 + cl.Blue * 0.11));
+                                            dy = (int)(cd.Red * .3 + cd.Green * .59 + cd.Blue * 0.11 - (cu.Red * .3 + cu.Green * .59 + cu.Blue * 0.11));
+                                            double power = Math.Sqrt(dx * dx + dy * dy);
+                                            if (power > 20)
+                                            {
+                                                SKColor outlinecolor = SKColors.CadetBlue; //   outline
+                                               //image.SetPixel(i, j, c);
+                                                buffer[i, j, 0] = outlinecolor.Red;
+                                                buffer[i, j, 1] = outlinecolor.Green;
+                                                buffer[i, j, 2] = outlinecolor.Blue;
+                                                buffer[i, j, 3] = 0xFF;        // alpha
+                                                /*
+                                                fixed (byte* ptr = buffer)
+                                                {
+                                                    image.SetPixels((IntPtr)ptr);
+                                                }
+                                                */
+                                            }
+                                            else
+                                            {
+                                                if (!keeporiginal)
+                                                {
+                                                    SKColor c1 = SKColors.PaleGreen; // to adeio meros
+                                                                                     // image.SetPixel(i, j, c1);
+                                                                                     //   buffer[i, j, 0] = c1.Red;  // red
+                                                                                     //   buffer[i, j, 1] = c1.Green;   // green
+                                                                                     //   buffer[i, j, 2] = c1.Blue;
+                                                                                     //   buffer[i, j, 3] = 0xFF;        // alpha
+
+                                                }
+                                                else
+                                                {
+                                                    SKColor currentcolor = pmap.GetPixelColor(i, j);
+                                                    //   image.SetPixel(i, j, currentcolor);
+                                                    buffer[i, j, 0] = currentcolor.Red;  // red
+                                                    buffer[i ,j, 1] = currentcolor.Green;   // green
+                                                    buffer[i, j, 2] = currentcolor.Blue;
+                                                    buffer[i, j, 3] = 0xFF;        // alpha
+                                                                                   // fixed (byte* ptr = buffer)
+                                                                                   //  {
+                                                                                   //   image.SetPixels((IntPtr)ptr);
+                                                                                   // }
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    fixed (byte* ptr = buffer)
+                                    {
+                                        image.SetPixels((IntPtr)ptr);
+                                    }
+                                }
+
+                            }
+
+end***************************
+ try
+            {
+                SKColor[] newpixels = new SKColor[USerskbitmapNEW.Width * USerskbitmapNEW.Height];
+
+
+                canvas.Clear(SKColors.White);
+
+                // Load the input image
+                SKBitmap inputBitmap = USerskbitmapNEW.Copy();
+
+                // Create an output bitmap with the same dimensions as the input
+                SKBitmap outputBitmap = new SKBitmap(inputBitmap.Width, inputBitmap.Height);
+
+                // Lock the input and output pixmaps for direct access to the pixel data
+                SKPixmap inputPixmap = inputBitmap.PeekPixels();
+                SKPixmap outputPixmap = outputBitmap.PeekPixels();
+
+                // Loop through each pixel in the input image
+                for (int y = 1; y < inputPixmap.Height - 1; y++)
+                {
+                    for (int x = 1; x < inputPixmap.Width - 1; x++)
+                    {
+                        // Get the colors of surrounding pixels
+
+                        SKColor c00 = inputPixmap.GetPixelColor(x - 1, y - 1);
+                        SKColor c01 = inputPixmap.GetPixelColor(x - 1, y);
+                        SKColor c02 = inputPixmap.GetPixelColor(x - 1, y + 1);
+                        SKColor c10 = inputPixmap.GetPixelColor(x, y - 1);
+                        SKColor c11 = inputPixmap.GetPixelColor(x, y);
+                        SKColor c12 = inputPixmap.GetPixelColor(x, y + 1);
+                        SKColor c20 = inputPixmap.GetPixelColor(x + 1, y - 1);
+                        SKColor c21 = inputPixmap.GetPixelColor(x + 1, y);
+                        SKColor c22 = inputPixmap.GetPixelColor(x + 1, y + 1);
+
+                        // Compute the x and y gradients using a Sobel filter
+                        float gx = c00.Red * -1 + c02.Red + c10.Red * -2 + c12.Red * 2 + c20.Red * -1 + c22.Red;
+                        float gy = c00.Red * -1 + c01.Red * -2 + c02.Red * -1 + c20.Red + c21.Red * 2 + c22.Red;
+
+                        // Compute the gradient magnitude and threshold it
+                        float magnitude = (float)Math.Sqrt(gx * gx + gy * gy);
+                        SKColor color = magnitude > 128 ? SKColors.Black : SKColors.White;
+                        newpixels[x+y]= color;
+                        // Set the output pixel color
+                        //outputPixmap.SetPixel(x, y, color);
+                        // outputBitmap.GetPixel()
+                    }
+                }
+
+                // Unlock the pixmaps to release the direct access to the pixel data
+                inputPixmap.Dispose();
+                outputPixmap.Dispose();
+                outputBitmap.Pixels = newpixels;
+                // Draw the output bitmap to the canvas
+                canvas.DrawBitmap(outputBitmap, myframe);
+
+
+            }
+
+
+start   pointer examples   ******************
+ IntPtr pixelsAddr = USerskbitmapNEW.GetPixels();
+                unsafe
+                {
+                    for (int rep = 0; rep < 1; rep++)
+                    {
+                        byte* ptr = (byte*)pixelsAddr.ToPointer();
+
+                        for (int row = 0; row < USerskbitmapNEW.Height; row++)
+                            for (int col = 0; col < USerskbitmapNEW.Width; col++)
+                            {
+                                SKColor cc = USerskbitmapNEW.GetPixel(col, row);
+                                byte color1 = cc.Red;
+                                byte color2 = *ptr++;  //  read red byte ????
+
+                               if (color1!=color2)
+                                {
+                                    int x = 1;
+
+                                }
+
+
+                                if (color2 > 100)
+                                    *ptr = color2;//  (byte)(1);   // red
+                                else
+                                    *ptr = color2; //(byte)(255);   // red
+
+
+                                //*ptr++ = (byte)(255);   // red
+                                *ptr++ = 0;             // green
+                                *ptr++ = (byte)(row);   // blue
+                                *ptr++ = 0xFF;          // alpha
+                            }
+                    }
+                }
+                int ms = (int)stopwatch.ElapsedMilliseconds;
+                canvas.DrawBitmap(USerskbitmapNEW, myframe); //filter aplly to
+
+
+
+end
+
+
+
+
+
+*************************************   add contrast  using MArshal   ************
+
+
+void OnPaintSurfaceproc(SKPaintSurfaceEventArgs args)
+    {
+
+        if (USerskbitmapNEW != null)
+        {
+            var stopwatch = new System.Diagnostics.Stopwatch();
+            stopwatch.Restart();
+
+            SKImageInfo info = USerskbitmapNEW.Info;
+            SKSurface surface = args.Surface;
+            SKCanvas canvas = surface.Canvas;
+            SKRect myframe = canvas.DeviceClipBounds; 
+            try
+            {
+
+                // SKPixmap pixm = USerskbitmapNEW.PeekPixels();
+
+                // Lock the pixels to get direct access to the pixel buffer
+                IntPtr pixels = USerskbitmapNEW.GetPixels();
+
+                // Calculate the size of each pixel in bytes
+                int pixelSize = info.BytesPerPixel;
+
+                // Calculate the row bytes (stride) of the bitmap
+                int rowBytes = info.RowBytes;
+
+                // Loop through each pixel and modify it
+                for (int y = 0; y < info.Width; y++)
+                {
+                    // Calculate the starting address of the current row
+                    IntPtr rowAddress = pixels + y * rowBytes;
+
+                    for (int x = 0; x < info.Width; x++)
+                    {
+                        /*  is OK
+                        SKColor cr = pixm.GetPixelColor(x,y);
+                        var newvR = cr.Red;
+                        var newvG = cr.Green;
+                        var newB = cr.Blue;
+                        */
+
+                        // Calculate the starting address of the current pixel
+                        IntPtr pixelAddress = rowAddress + x * pixelSize;
+                        /* 
+                        var newvR = Marshal.ReadByte(pixelAddress + 2);
+                        var newvG = Marshal.ReadByte(pixelAddress + 1);
+                        var newB = Marshal.ReadByte(pixelAddress);
+                        */
+
+                        // Read the color components of the pixel
+                        byte blue = Marshal.ReadByte(pixelAddress);
+                        byte green = Marshal.ReadByte(pixelAddress + 1);
+                        byte red = Marshal.ReadByte(pixelAddress + 2);
+
+                        // Increase the contrast of the pixel color
+                        byte newR = IncreaseContrast(red);
+                        byte newG = IncreaseContrast(green);
+                        byte newB = IncreaseContrast(blue);
+
+
+                        // Modify the pixel color (e.g., make it red)
+                        Marshal.WriteByte(pixelAddress, newB);    // Blue component
+                        Marshal.WriteByte(pixelAddress + 1, newG);  // Green component
+                        Marshal.WriteByte(pixelAddress + 2, newR);  // Red component
+                       // Marshal.WriteByte(pixelAddress + 3, 255);  // Alpha component
+                    }
+                }
+
+                canvas.DrawBitmap(USerskbitmapNEW, myframe); 
+                /*
+                using (var paint = new SKPaint())
+                {
+                    canvas.DrawBitmap(USerskbitmapNEW, myframe, paint); //   
+                }
+                */
+                snapshot = surface.Snapshot().Encode();
+
+                long ttx = stopwatch.ElapsedMilliseconds;
+
+            }
+
+            catch (Exception er) { ErrorMessage = er.Message; }
+        }
+
+
+
+
+
+    }
+
+
+
+
+********END*****************

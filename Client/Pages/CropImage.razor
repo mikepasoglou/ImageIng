@@ -1,0 +1,286 @@
+﻿@page "/CropImage"
+@using ImageIng.Shared
+@using System.Net.Http.Headers
+@inject HttpClient Http
+@inject IJSRuntime JS
+
+
+
+
+@if (ErrorMessage != string.Empty)
+{
+    <div>
+        <p>  ERROR  </p>
+        <p>@ErrorMessage</p>
+    </div>
+}
+
+<div class="btn-group">
+    <div class="container col-md-2">
+        <InputFile OnChange="@Onupload" />
+    </div>
+</div>
+
+<div class="col border rounded p-4 canvas-container align-content-center">
+    <SKCanvasView @ref="skiaViewUserimage" OnPaintSurface="Onshowloadimg" IgnorePixelScaling="true" EnableRenderLoop="true"
+                  @onpointerdown="OnPointerDown" @onpointermove="OnPointerMove" @onpointerup="OnPointerUp" @onpointerleave="OnPointerLeave"
+                  style="width:500px;height:500px; color:aquamarine" />
+
+    <SKCanvasView @ref="skiaViewProcimage" OnPaintSurface="OnPaintSurfaceproc" IgnorePixelScaling="true" EnableRenderLoop="false"
+                  style="width:500px;height:500px; color:aquamarine" />
+
+    <button class="btn btn-primary col-md-2" @onclick="@((e) => OnBtnDone(e))" style="width=100px; background-color:blue">Crop Done</button>
+
+</div>
+
+
+
+
+
+
+
+@code {
+
+    SKCanvasView? skiaViewUserimage;
+    SKCanvasView? skiaViewProcimage;
+
+    byte[] GLuserimgBytearray = null;
+    SKBitmap UserBitmap = null;
+    string userimg = string.Empty;
+    string procimg = string.Empty;
+    string ErrorMessage = string.Empty;
+    SKData snapshot;
+
+    const int CORNER = 50;      // pixel length of cropper corner
+    const int RADIUS = 50 ;     // pixel radius of touch hit-test   anoxi apo pou tha pianei to mouse thn gonia 
+    CroppingRectangle? croppingRect;
+    bool mousepclicked = false;
+    SKPoint? touchLocation;
+
+    SKRectI mysize;
+    int touchcnt = 0;
+
+
+    SKMatrix inverseBitmapMatrix;
+
+    struct TouchPoint
+    {
+        public int CornerIndex { set; get; }
+        public SKPoint Offset { set; get; }
+    }
+
+    Dictionary<long, TouchPoint> touchPointsArray = new Dictionary<long, TouchPoint>();
+
+    // Drawing objects
+    SKPaint cornerPen = new SKPaint
+        {
+            Style = SKPaintStyle.Stroke,
+            Color = SKColors.BlanchedAlmond,
+            StrokeWidth = 9
+        };
+
+    SKPaint PenGreen = new SKPaint
+        {
+
+            Style = SKPaintStyle.Stroke,
+            Color = SKColors.Gainsboro,
+            StrokeWidth = 4
+        };
+
+
+
+    void OnPaintSurfaceproc(SKPaintSurfaceEventArgs args)
+    {
+        try
+        {
+            if (UserBitmap != null)
+            {
+                SKImageInfo info = args.Info;
+                SKSurface surface = args.Surface;
+                SKCanvas canvas = surface.Canvas;
+
+                SKRect myframe = canvas.DeviceClipBounds;
+                canvas.Clear(SKColors.Gray);
+
+                SKRect cropRect = croppingRect.Rect;
+                SKBitmap croppedBitmap = new SKBitmap((int)cropRect.Width, (int)cropRect.Height);
+                SKRect dest = new SKRect(0, 0, cropRect.Width, cropRect.Height);
+                SKRect source = new SKRect(cropRect.Left, cropRect.Top, cropRect.Right, cropRect.Bottom);
+                canvas.DrawBitmap(UserBitmap, source, myframe);
+            }
+        }
+        catch (Exception er) { ErrorMessage = er.Message; }
+    }
+
+
+
+
+
+    void OnPointerDown(PointerEventArgs args)  // cliced
+    {
+        mousepclicked = true;
+    }
+
+
+    void OnMouseEnter(MouseEventArgs args)  { }
+
+    void OnPointerUp(PointerEventArgs args)
+    {
+        mousepclicked = false;
+        touchPointsArray.Clear();
+        touchcnt = 0;
+    }
+
+    void OnPointerLeave(PointerEventArgs args)
+    {
+        mousepclicked = false;
+        touchPointsArray.Clear();
+    }
+
+
+    async Task OnBtnDone(MouseEventArgs e)
+    {
+        touchPointsArray.Clear();
+        mousepclicked = false;
+        skiaViewProcimage.Invalidate();
+    }
+
+
+
+
+
+    void OnPointerMove(PointerEventArgs args)
+    {
+        try
+        {
+            if (mousepclicked)
+            {
+                touchLocation = new SKPoint((float)args.OffsetX, (float)args.OffsetY);
+                SKPoint np = new SKPoint(touchLocation.Value.X, touchLocation.Value.Y);
+                SKPoint  pixelLocation = ConvertToPixel(np);
+
+                SKPoint newbitmapLocation = inverseBitmapMatrix.MapPoint(pixelLocation);
+                float radius = inverseBitmapMatrix.ScaleX * RADIUS;
+
+                // Find corner that the finger is touching --  which corner of the rect will change 
+                int cornerIndex = croppingRect.HitTest(newbitmapLocation, radius);
+
+                if (cornerIndex != -1)
+                {
+                    TouchPoint touchPoint = new TouchPoint { CornerIndex = cornerIndex, Offset = newbitmapLocation - croppingRect.Corners[cornerIndex] };
+                    touchPointsArray.Add(touchcnt, touchPoint);
+
+                    TouchPoint movepoint = touchPointsArray[touchcnt];
+                    croppingRect.MoveCorner(movepoint.CornerIndex, newbitmapLocation);
+                    skiaViewUserimage.Invalidate();
+                    touchcnt++;
+                }
+            }
+        }
+        catch (Exception er) { ErrorMessage = er.Message; }
+    }
+
+
+
+   
+
+
+    async Task Onupload(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            ErrorMessage = string.Empty;
+            var file = e.File;
+            long maxFileSize = 1024 * 25000;
+            var fileContent = new StreamContent(file.OpenReadStream(maxFileSize));
+            fileContent.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType);
+            GLuserimgBytearray = await fileContent.ReadAsByteArrayAsync();
+            UserBitmap = SKBitmap.Decode(GLuserimgBytearray);
+            SKRect bitmapRect = new SKRect(0, 0, UserBitmap.Width, UserBitmap.Height);
+            croppingRect = new CroppingRectangle(bitmapRect);
+        }
+        catch (Exception er) { ErrorMessage = er.Message; }
+    }
+
+    void Onshowloadimg(SKPaintSurfaceEventArgs args)
+    {
+        try
+        {
+            if (UserBitmap != null)
+            {
+                SKImageInfo info = args.Info;
+                SKSurface surface = args.Surface;
+                SKCanvas canvas = surface.Canvas;
+                mysize = canvas.DeviceClipBounds;
+                canvas.Clear(SKColors.Gray);
+
+                // Calculate rectangle for displaying bitmap
+                float scale = Math.Min((float)info.Width / UserBitmap.Width, (float)info.Height / UserBitmap.Height); //   real NOt of canvas
+
+                float x = (info.Width - scale * UserBitmap.Width) / 2;
+                float y = (info.Height - scale * UserBitmap.Height) / 2;
+                SKRect bitmapRect = new SKRect(x, y, x + scale * UserBitmap.Width, y + scale * UserBitmap.Height); // not used
+                canvas.DrawBitmap(UserBitmap, canvas.DeviceClipBounds); // first display image into the bitmapRect -check
+
+                // Calculate a matrix transform for displaying the cropping rectangle
+                SKMatrix bitmapScaleMatrix = SKMatrix.CreateIdentity();
+                bitmapScaleMatrix.SetScaleTranslate(scale, scale, x, y);
+                
+                SKRect scaledCropRect = bitmapScaleMatrix.MapRect(croppingRect.Rect);
+                canvas.DrawRect(scaledCropRect, PenGreen); // draw first rect
+
+                // Display heavier corners
+                using (SKPath path = new SKPath())
+                {
+                    path.MoveTo(scaledCropRect.Left, scaledCropRect.Top + CORNER);
+                    path.LineTo(scaledCropRect.Left, scaledCropRect.Top);
+                    path.LineTo(scaledCropRect.Left + CORNER, scaledCropRect.Top);
+
+                    path.MoveTo(scaledCropRect.Right - CORNER, scaledCropRect.Top);
+                    path.LineTo(scaledCropRect.Right, scaledCropRect.Top);
+                    path.LineTo(scaledCropRect.Right, scaledCropRect.Top + CORNER);
+
+                    path.MoveTo(scaledCropRect.Right, scaledCropRect.Bottom - CORNER);
+                    path.LineTo(scaledCropRect.Right, scaledCropRect.Bottom);
+                    path.LineTo(scaledCropRect.Right - CORNER, scaledCropRect.Bottom);
+
+                    path.MoveTo(scaledCropRect.Left + CORNER, scaledCropRect.Bottom);
+                    path.LineTo(scaledCropRect.Left, scaledCropRect.Bottom);
+                    path.LineTo(scaledCropRect.Left, scaledCropRect.Bottom - CORNER);
+
+                    canvas.DrawPath(path, cornerPen);
+                }
+
+                // Invert the transform for touch tracking
+                bitmapScaleMatrix.TryInvert(out inverseBitmapMatrix);
+            }
+        }
+        catch (Exception er) { ErrorMessage = er.Message; }
+
+
+    }
+
+    SKPoint ConvertToPixel(SKPoint pt)
+    {
+        return new SKPoint((float)(mysize.Width * pt.X / mysize.Width),   // check it
+                            (float)(mysize.Height * pt.Y / mysize.Height));
+    }
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        //await base.OnInitializedAsync();
+    }
+}
+
+
+
+
+
+
+
+
+
+
+        

@@ -1,0 +1,40 @@
+﻿@page "/AddText"
+@using ImageIng.Shared
+@using System.Net.Http.Headers
+@inject HttpClient Http
+@inject IJSRuntime JS;
+
+
+<style>
+    body {
+        /*background-color: antiquewhite; */
+        background-image: url(../images/bgim.jpg)
+    }
+
+
+    .icon-gray {
+        background-image: url(../icons/brush_256.png);
+        background-size: cover;
+        display: inline-block;
+        height: 35px;
+        width: 35px;
+    }
+
+    .icon-colortrans {
+        background-image: url(../icons/image-processing.png);
+        background-size: cover;
+        display: inline-block;
+        height: 35px;
+        width: 35px;
+    }
+
+</style>
+
+
+
+<PageTitle>Image AddText</PageTitle>
+
+
+@code {
+
+}

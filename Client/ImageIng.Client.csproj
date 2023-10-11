@@ -1,0 +1,38 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <AspNetCoreHostingModel>OutOfProcess</AspNetCoreHostingModel>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="GlobalVariables.cs" />
+    <Compile Remove="Pages\AddText.cshtml.cs" />
+    <Compile Remove="Pages\Transportation.cshtml.cs" />
+    <Compile Remove="PhotoCropperCanvasView.cs" />
+    <Compile Remove="TouchActionEventArgs.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Remove="Pages\AddText.cshtml" />
+    <Content Remove="Pages\Counter.razor" />
+    <Content Remove="Pages\CropImg.razor" />
+    <Content Remove="Pages\Transportation.cshtml" />
+    <Content Remove="wwwroot\icons\brush_48.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="7.0.5" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="7.0.3" PrivateAssets="all" />
+    <PackageReference Include="SkiaSharp" Version="2.88.3" />
+    <PackageReference Include="SkiaSharp.Views.Blazor" Version="2.88.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Shared\ImageIng.Shared.csproj" />
+  </ItemGroup>
+
+</Project>

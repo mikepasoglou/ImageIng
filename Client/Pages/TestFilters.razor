@@ -1,0 +1,599 @@
+﻿@page "/TestFilters"
+@using ImageIng.Shared
+@using System.Net.Http.Headers
+@inject HttpClient Http
+@inject IJSRuntime JS
+@using System.Runtime.InteropServices;
+
+
+<p> @xpos </p>
+<p> @ypos </p>
+
+<p> X @curx  ----   @intcurx </p>
+<p> Y @cury ---- @intcury </p>
+
+
+@if (ErrorMessage != string.Empty)
+{
+    <div>
+        <p>  ERROR  </p>
+        <p>@ErrorMessage</p>
+    </div>
+}
+
+<div class="btn-group">
+    <div class="container col-md-2">
+        <InputFile OnChange="@Onupload" />
+    </div>
+</div>
+
+<div class="col border rounded p-4 canvas-container align-content-center">
+    <SKCanvasView @ref="skiaViewUserimage" OnPaintSurface="showloadimg" IgnorePixelScaling="true" EnableRenderLoop="false" 
+                  @onpointerdown="OnPointerDown" @onpointermove="OnPointerMove"  @onpointerup="OnPointerUp" @onpointerleave="OnPointerLeave"
+                  style="width:500px;height:500px; color:aquamarine" />
+
+    <SKCanvasView @ref="skiaViewProcimage" OnPaintSurface="OnPaintSurfaceproc" IgnorePixelScaling="true" EnableRenderLoop="false"
+                  style="width:500px;height:500px; color:aquamarine" />
+
+</div>
+
+<button class="btn btn-primary col-md-10" @onclick="@((e) => OnBtnTestImageSharp(e))" style="background-color:lightcoral">OnBtnTestImageSharp</button>
+<button class="btn btn-primary col-md-10" @onclick="@((e) => OnBtn1(e))" style="background-color:lightcoral">TEST NOW</button>
+<button class="btn btn-primary col-md-10" @onclick="@((e) => OnBtnGrayscale(e))" style="background-color:lightcoral">NOTHIng</button>
+
+
+
+
+
+
+@code {
+
+    //SKRect fcropRect;
+
+    //[Inject] IJSRuntime JS { get; set; } = null!;
+
+
+    SKCanvasView? skiaViewUserimage = null!;
+    SKCanvasView? skiaViewProcimage = null!;
+
+
+
+    byte[] GLuserimgBytearray = null;
+    byte[] GLtempimgBytearray = null;
+    SKBitmap USerskbitmapNEW = null;
+    string userimg = string.Empty;
+    string procimg = string.Empty;
+    string ErrorMessage = string.Empty;
+
+    SKData snapshot;
+
+
+    string xpos, ypos = string.Empty;
+    float curx = 0.0f;
+    float cury = 0.0f;
+
+    int intcurx = 0;
+    float intcury = 0;
+
+    Stream usrstream;
+
+
+
+    SKPaint Pen1 = new SKPaint
+        {
+            Style = SKPaintStyle.Stroke,
+            Color = SKColors.Green,
+            StrokeWidth = 4
+        };
+
+    SKPaint Pen2 = new SKPaint
+        {
+            Style = SKPaintStyle.Stroke,
+            Color = SKColors.Yellow,
+            StrokeWidth = 7
+        };
+
+    uint MakePixel(byte red, byte green, byte blue, byte alpha) => (uint)((alpha << 24) | (blue << 16) | (green << 8) | red);
+
+
+
+
+    private string prepareImgArraytodisplay(byte[] curimgarr)
+    {
+        var base64 = Convert.ToBase64String(curimgarr);
+        var imgSrc = String.Format("data:image/gif;base64,{0}", base64); //  uploaded photo in a string base64
+        return imgSrc;
+
+
+    }
+
+
+
+
+    void OnPaintSurfaceproc(SKPaintSurfaceEventArgs args)
+    {
+
+        if (USerskbitmapNEW != null)
+        {
+            var stopwatch = new System.Diagnostics.Stopwatch();
+            stopwatch.Restart();
+
+            SKImageInfo info = USerskbitmapNEW.Info;
+            SKSurface surface = args.Surface;
+            SKCanvas canvas = surface.Canvas;
+            SKRect myframe = canvas.DeviceClipBounds;
+            try
+            {
+
+
+                // load the input image
+
+                int width = USerskbitmapNEW.Width;
+                int height = USerskbitmapNEW.Height;
+
+                    // lock the bitmap pixels
+                var pixels = USerskbitmapNEW.Bytes;
+                int rowBytes = USerskbitmapNEW.RowBytes;
+
+                    // define oil painting effect parameters
+                    int brushSize = 8;
+                    int intensity = 15;
+
+                    // loop through each pixel of the image
+                    for (int x = brushSize; x < width - brushSize; x++)
+                    {
+                        for (int y = brushSize; y < height - brushSize; y++)
+                        {
+                            int red = 0, green = 0, blue = 0, count = 0;
+
+                            // calculate the average color within a brushstroke region
+                            for (int i = -brushSize; i <= brushSize; i++)
+                            {
+                                for (int j = -brushSize; j <= brushSize; j++)
+                                {
+                                    //int pixelIndex = (y + j) * rowBytes + (x + i) * 4;
+                                    int pixelIndex = (y + j+1) * rowBytes + (x + i) * 4;
+                                    
+
+                                    byte b = Marshal.ReadByte(pixelIndex);
+                                    byte g = Marshal.ReadByte(pixelIndex + 1);
+                                    byte r = Marshal.ReadByte(pixelIndex + 2);
+
+                                    blue += b;
+                                    green += g;
+                                    red += r;
+
+                                    count++;
+                                }
+                            }
+
+                            // calculate the average color within the brushstroke region
+                            blue /= count;
+                            green /= count;
+                            red /= count;
+
+                            // adjust the color components of the current pixel based on the intensity and the difference between its original color and the average color within the brushstroke
+                            int pixelIndexCurrent = y * rowBytes + x * 4;
+                            byte bCurrent = Marshal.ReadByte(pixelIndexCurrent);
+                            byte gCurrent = Marshal.ReadByte(pixelIndexCurrent + 1);
+                            byte rCurrent = Marshal.ReadByte(pixelIndexCurrent + 2);
+
+                            int diffBlue = Math.Abs(blue - bCurrent);
+                            int diffGreen = Math.Abs(green - gCurrent);
+                            int diffRed = Math.Abs(red - rCurrent);
+
+                            int diffTotal = diffBlue + diffGreen + diffRed;
+
+                            if (diffTotal > intensity)
+                            {
+                                int intensityFactor = (diffTotal * 255) / (3 * intensity);
+
+                                byte bNew = (byte)Math.Min(5, Math.Max(0, bCurrent + intensityFactor));
+                                byte gNew = (byte)Math.Min(25, Math.Max(0, gCurrent + intensityFactor));
+                                byte rNew = (byte)Math.Min(32, Math.Max(0, rCurrent + intensityFactor));
+
+                                Marshal.WriteByte(pixelIndexCurrent, bNew);
+                                Marshal.WriteByte(pixelIndexCurrent + 1, gNew);
+                                Marshal.WriteByte(pixelIndexCurrent + 2, rNew);
+                            }
+                        }
+                    }
+                
+
+                canvas.DrawBitmap(USerskbitmapNEW, myframe);
+                snapshot = surface.Snapshot().Encode();
+
+                long ttx = stopwatch.ElapsedMilliseconds;
+            }
+
+            catch (Exception er) { ErrorMessage = er.Message; }
+        }
+    }
+
+
+
+    /*
+    void OnPaintSurfaceproc(SKPaintSurfaceEventArgs args)
+    {
+
+        if (USerskbitmapNEW != null)
+        {
+            var stopwatch = new System.Diagnostics.Stopwatch();
+            stopwatch.Restart();
+
+            SKImageInfo info = USerskbitmapNEW.Info;
+            SKSurface surface = args.Surface;
+            SKCanvas canvas = surface.Canvas;
+            SKRect myframe = canvas.DeviceClipBounds; 
+            try
+            {
+
+                // SKPixmap pixm = USerskbitmapNEW.PeekPixels();
+
+                // Lock the pixels to get direct access to the pixel buffer
+                IntPtr pixels = USerskbitmapNEW.GetPixels();
+
+                // Calculate the size of each pixel in bytes
+                int pixelSize = info.BytesPerPixel;
+
+                // Calculate the row bytes (stride) of the bitmap
+                int rowBytes = info.RowBytes;
+
+                // Loop through each pixel and modify it
+                for (int y = 0; y < info.Width; y++)
+                {
+                    // Calculate the starting address of the current row
+                    IntPtr rowAddress = pixels + y * rowBytes;
+
+                    for (int x = 0; x < info.Width; x++)
+                    {
+                        //  is OK
+                       // SKColor cr = pixm.GetPixelColor(x,y);
+                       // var newvR = cr.Red;
+                      //  var newvG = cr.Green;
+                      //  var newB = cr.Blue;
+
+                        // Calculate the starting address of the current pixel
+                        IntPtr pixelAddress = rowAddress + x * pixelSize;
+                        
+
+                        // Read the color components of the pixel
+                        byte blue = Marshal.ReadByte(pixelAddress);
+                        byte green = Marshal.ReadByte(pixelAddress + 1);
+                        byte red = Marshal.ReadByte(pixelAddress + 2);
+
+                        // Increase the contrast of the pixel color
+                        byte newR = IncreaseContrast(red);
+                        byte newG = IncreaseContrast(green);
+                        byte newB = IncreaseContrast(blue);
+
+
+                        // Modify the pixel color (e.g., make it red)
+                        Marshal.WriteByte(pixelAddress, newB);    // Blue component
+                        Marshal.WriteByte(pixelAddress + 1, newG);  // Green component
+                        Marshal.WriteByte(pixelAddress + 2, newR);  // Red component
+                       // Marshal.WriteByte(pixelAddress + 3, 255);  // Alpha component
+                    }
+                }
+
+                canvas.DrawBitmap(USerskbitmapNEW, myframe); 
+               
+                snapshot = surface.Snapshot().Encode();
+
+                long ttx = stopwatch.ElapsedMilliseconds;
+
+            }
+
+            catch (Exception er) { ErrorMessage = er.Message; }
+        }
+    }
+    */
+
+    private byte IncreaseContrast(byte value)
+    {
+        const int contrastFactor = 5;  // Adjust this value to increase/decrease contrast
+        const int midPoint = 128;
+
+        int newValue = (value - midPoint) * contrastFactor + midPoint;
+        return (byte)Math.Min(Math.Max(newValue, 0), 255);
+    }
+
+
+
+
+    /*
+            *
+    *
+    //   kalo
+    SKShaderTileMode xTileMode = SKShaderTileMode.Repeat;
+    using (SKPaint paint = new SKPaint())
+    {
+    paint.Shader = SKShader.CreateBitmap(USerskbitmapNEW, xTileMode, xTileMode);
+    canvas.DrawRect(info.Rect, paint);
+        }
+     *
+     * */
+
+    SKPoint ConvertToPixel(SKPoint pt)
+    {
+        return new SKPoint((float)(mysize.Width * pt.X / mysize.Width),
+                            (float)(mysize.Height * pt.Y / mysize.Height));
+    }
+
+
+
+
+    long pointid = 0;
+    bool mousepclicked = false;
+    SKPoint? touchLocation;
+
+    int sessionId = 0;
+    SKRectI mysize;
+    SKPoint pixelLocation;
+    //SKPoint bitmapLocation;
+
+    void OnPointerDown(PointerEventArgs args)  // cliced 
+    {
+        mousepclicked = true;
+
+    }
+
+    SKPoint showpoind;
+
+    void OnMouseEnter(MouseEventArgs args)
+    {
+    }
+
+    void OnPointerMove(PointerEventArgs args)
+    {
+        try
+        {
+
+
+
+
+
+        }
+        catch (Exception er) { ErrorMessage = er.Message; }
+
+
+
+
+
+
+    }
+
+    void OnPointerUp(PointerEventArgs args)
+    {
+
+    }
+
+    void OnPointerLeave(PointerEventArgs args)
+    {
+    }
+
+
+    async Task OnBtnGrayscale(MouseEventArgs e)
+    {
+    }
+    //
+    //
+    async Task OnBtnTestImageSharp(MouseEventArgs e)
+    {
+
+
+
+        // var stopw = new System.Diagnostics.Stopwatch();
+        //  stopw.Restart();
+
+
+        //  https://docs.aspose.com/imaging/net/creating-opening-and-saving-images/#opening-using-a-stream
+
+        //Size size = new Size(100, 100);
+
+
+        //BitmapData sd  = new BitmapData
+
+        // var result = new SKBitmap(new SKImageInfo(source.Width, source.Height));
+        try
+        {
+
+
+            //  long x = stopw.ElapsedMilliseconds;
+            //  int xss = 1;
+
+            // Convert the bitmap to a grayscale image
+            SKImage grayImage = SKImage.FromBitmap(USerskbitmapNEW);
+
+
+            // Create a new SKBitmap object for the filtered image
+            SKBitmap filteredBitmap = new SKBitmap(USerskbitmapNEW.Width, USerskbitmapNEW.Height);
+
+            // Create a new SKCanvas object for the filtered bitmap
+
+            using (SKCanvas canvas = new SKCanvas(filteredBitmap))
+            {
+                // Create a new SKPaint object for the filter
+                SKPaint paint = new SKPaint();
+
+                // Set the color filter to a convolution filter with the Sobel operator
+                paint.ColorFilter = SKColorFilter.CreateColorMatrix (new float[20] { -1, 0, 1, -2, 0, 2, -1, 0, 1,1,-1,2,0,1,-1,-0.1f,1,1,1,1 }
+                    
+                );
+
+                // Draw the grayscale image to the canvas using the paint with the filter
+                canvas.DrawImage(grayImage, 0, 0, paint);
+            }
+
+
+
+            //var pngBytes = image.ToBase64String(PngFormat.Instance);
+            //   USerskbitmapNEW = SKBitmap.Decode(usrstream);
+            skiaViewProcimage.Invalidate();
+        }
+
+
+        
+        catch (Exception er) { ErrorMessage = er.Message ; }
+
+    }
+
+
+    
+
+    async Task OnBtn1(MouseEventArgs e)
+    {
+
+
+        Random rr = new Random();
+        int a = rr.Next(1, 100);
+        float hval = (float)a;
+
+        Random rr1 = new Random();
+        int b = rr1.Next(1, 2);
+        float lval = (float)b;
+
+        Random rr2 = new Random();
+        int c = rr1.Next(1, 2);
+        float sval = (float)c;
+
+
+
+        skiaViewProcimage.Invalidate();
+    }
+
+
+
+    async Task Onupload(InputFileChangeEventArgs e)  
+    {
+        try
+        {
+            ErrorMessage = string.Empty;
+            //    gia ton palio tropo mono
+            /*
+            using (MemoryStream result = new MemoryStream())
+                {
+                await e.File.OpenReadStream(long.MaxValue).CopyToAsync(result);
+                GlobalVariables.GLuserimgBytearray = result.ToArray();
+            }
+            */
+            //    gia ton palio tropo mono
+
+
+            //using var content = new MultipartFormDataContent();
+            var file = e.File;
+            long maxFileSize = 1024 * 25000;
+            var fileContent = new StreamContent(file.OpenReadStream(maxFileSize));
+            fileContent.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType);
+            GLuserimgBytearray = await fileContent.ReadAsByteArrayAsync();
+
+            usrstream = await fileContent.ReadAsStreamAsync();  // aux 
+                        
+
+            USerskbitmapNEW = SKBitmap.Decode(GLuserimgBytearray);
+            SKRect bitmapRect = new SKRect(0, 0, USerskbitmapNEW.Width, USerskbitmapNEW.Height);
+            skiaViewUserimage.Invalidate();
+
+           
+
+
+        }
+        catch (Exception er) { ErrorMessage = er.Message; }
+    }
+
+    void showloadimg(SKPaintSurfaceEventArgs args)
+    {
+        try
+        {
+            if (USerskbitmapNEW != null)
+            {
+
+                SKImageInfo info = args.Info;
+                SKSurface surface = args.Surface;
+                SKCanvas canvas = surface.Canvas;
+                mysize = canvas.DeviceClipBounds;
+                canvas.Clear(SKColors.Gray);
+
+                // Calculate rectangle for displaying bitmap
+                float scale = Math.Min((float)info.Width / USerskbitmapNEW.Width, (float)info.Height / USerskbitmapNEW.Height); //   real NOt of canvas
+
+                float x = (info.Width - scale * USerskbitmapNEW.Width) / 2;
+                float y = (info.Height - scale * USerskbitmapNEW.Height) / 2;
+                SKRect bitmapRect = new SKRect(x, y, x + scale * USerskbitmapNEW.Width, y + scale * USerskbitmapNEW.Height); // not used 
+
+                canvas.DrawBitmap(USerskbitmapNEW, canvas.DeviceClipBounds); // first display image into the bitmapRect -check 
+            }
+
+           
+        }
+        catch (Exception er) { ErrorMessage = er.Message; }
+
+
+    }
+    
+
+    protected override async Task OnInitializedAsync()
+    {
+        //await base.OnInitializedAsync();
+
+    }
+
+
+        
+
+    // https://learn.microsoft.com/en-us/xamarin/xamarin-forms/user-interface/graphics/skiasharp/bitmaps/pixel-bits
+
+
+
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+        
+
+
+    
+
+
+
+        
+         
+        
+    
+        
+
+
+
+
+
+
+
+
+
+
+    
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+

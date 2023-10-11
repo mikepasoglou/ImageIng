@@ -1,0 +1,2382 @@
+﻿@page "/BasicFilters"
+@using ImageIng.Shared
+@using System.Net.Http.Headers
+@inject HttpClient Http
+@inject IJSRuntime JS;
+
+
+
+<style>
+    body {
+         /*background-color: antiquewhite; */
+        background-image: url(../images/bgim.jpg)
+       }
+
+
+    .icon-gray {
+        background-image: url(../icons/brush_256.png);
+        background-size: cover;
+        display: inline-block;
+        height: 35px;
+        width: 35px;
+    }
+
+    .icon-colortrans {
+        background-image: url(../icons/image-processing.png);
+        background-size: cover;
+        display: inline-block;
+        height: 35px;
+        width: 35px;
+    }
+
+</style>
+
+
+
+<PageTitle>Basic Filters</PageTitle>
+
+@if (ErrorMessage != string.Empty)
+{
+    <div> 
+        <p>  ERROR  !!!!!!!!!!!!!!! </p>
+        <p>@ErrorMessage</p>
+    </div>
+}
+
+<p>@xpos</p>
+<p>@ypos</p>
+
+<!-- 
+<div class="container">
+    <div class="row">
+        <div class="col border rounded p-2 canvas-container" style="width:100px;height:50px;">
+            <button class="btn btn-primary" @onclick="@((e) => onbtnbright(e))">Bright</button>
+            
+            
+            <button class="btn btn-danger" @onclick="@((e) => onencodeuserimg(e))">onencodeuserimg</button>
+            <button class="btn btn-danger" @onclick="@((e) => onencodeprocimg(e))">onencodeprocimg</button>
+        </div>
+    </div>
+</div>
+-->
+
+
+<head> 
+
+</head>
+
+<body> 
+
+    
+
+    <div class="container col-md-2" id="btnupload">
+        <InputFile OnChange="@Onupload" />
+    </div>
+
+
+    <div class="container-fluid" id="userimg">
+            <div class="col border rounded p-4 canvas-container align-content-center" id="procimgandbuttons">
+                <SKGLView OnPaintSurface="showloadimg" IgnorePixelScaling="true" EnableRenderLoop="true" style="width:200px;height:200px; color:aquamarine"
+                          @onpointerdown="OnPointerDown"  @onpointermove="OnPointerMove"  @onpointerup="OnPointerUp" />
+            </div>
+    </div>
+
+
+    <div class="container">
+        <div class="row">
+            <div class="col-sm">
+                <div class="col border rounded p-4 canvas-container align-content-center" id="procimgandbuttons">
+                    <SKCanvasView @ref="skiaView" OnPaintSurface="SetFilter" IgnorePixelScaling="true" EnableRenderLoop="false"
+                                  style="width:500px;height:500px; color:aquamarine" />
+                </div>
+            </div>
+            <div class="col-sm">
+                <div class="btn-group-vertical">
+                    
+                    <button class="btn btn-primary col-md-4" data-toggle="tooltip" data-placement="top" title="Use the slider to change the Brightness of your Image"
+                            @onclick="@((e) => onbtnbright(e))" style="background-color:lightcoral">
+                        <i class="icon-gray"></i>
+                        Brightness
+                    </button>
+
+                    <button class="btn btn-primary col-md-4" data-toggle="tooltip" data-placement="top" title="Use the slider to change the contrast of your Image"
+                            @onclick="@((e) => onBtnContrast(e))" style="background-color:lightcoral">
+                        <i class="icon-gray"></i>
+                        Contrast
+                    </button>
+                    <button class="btn btn-primary col-md-4" data-toggle="tooltip" data-placement="top" title="Use 3 sliders for color transformation"
+                            @onclick="@((e) => onBtnColorTransformation(e))" style="background-color:cornflowerblue">
+                        <i class="icon-colortrans"></i>
+                        color transformation
+                    </button>
+                    <button class="btn btn-primary col-md-4" data-toggle="tooltip" data-placement="top" title="Do Gray your Image"
+                            @onclick="@((e) => OnBtnGrayscale(e))" style="background-color:lightcoral">
+                        <i class="icon-gray"></i>
+                        Grayscale
+                    </button>
+                    <button class="btn btn-primary col-md-4" data-toggle="tooltip" data-placement="top" title="Embosed"
+                            @onclick="@((e) => OnBtnEmbosed(e))" style="background-color:lightcoral">
+                        <i class="icon-gray"></i>
+                        Embossed
+                    </button>
+                    <button class="btn btn-primary col-md-4" @onclick="@((e) => onbtnblul(e))" style="background-color:lightcoral">Blur</button>
+                    <button class="btn btn-primary col-md-4" @onclick="@((e) => OnBtnPosterize(e))" style="background-color:lightcoral">Posterize</button>
+                    <button class="btn btn-primary col-md-4" @onclick="@((e) => OnBtnContrast(e))" style="background-color:lightcoral">Highcontrast</button>
+                    <button class="btn btn-primary col-md-4" @onclick="@((e) => OnBtnShephia(e))" style="background-color:lightcoral">Shephia</button>
+                    <button class="btn btn-primary col-md-4" @onclick="@((e) => OnBtnPastel(e))" style="background-color:lightcoral">Pastel</button>
+                    <button class="btn btn-primary col-md-4" @onclick="@((e) => OnBtnRandom(e))" style="background-color:lightcoral">Random Posterize</button>
+                    <button class="btn btn-primary col-md-4" @onclick="@((e) => OnBtnOil(e))" style="background-color:lightcoral">Oil Painting</button>
+                    <button class="btn btn-primary col-md-4" @onclick="@((e) => ondilate(e))">Dilate</button>
+                    <button class="btn btn-primary col-md-1" @onclick="@((e) => Onposterize1(e))" style="background-color:cornflowerblue">Jazz</button>
+                    <button class="btn btn-primary col-md-1" @onclick="@((e) => Onposterize2(e))" style="background-color:cornflowerblue">Retro</button>
+                    <button class="btn btn-primary col-md-1" @onclick="@((e) => Onposterize3(e))" style="background-color:cornflowerblue">Vintage</button>
+                    <button class="btn btn-primary col-md-1" @onclick="@((e) => Onposterize4(e))" style="background-color:cornflowerblue">Random</button>
+                </div>
+                
+            </div>
+
+            <div class="col-sm">
+                <div class="btn-group-vertical">
+                    <button class="btn btn-primary col-md-4" @onclick="@((e) => onBtnEdge(e))">edge</button>
+                    <button class="btn btn-primary col-md-4" @onclick="@((e) => OnBtnSketck1(e))">Sketck 1</button>
+                    <button class="btn btn-primary col-md-4" @onclick="@((e) => onlowlevel1(e))">sketch 2</button>
+                    <button class="btn btn-primary col-md-4" @onclick="@((e) => OnBtnSketck3(e))">Vitro Style</button>
+                </div>
+            </div>
+
+            <div class="col-sm">
+
+                @if (showslider == true)
+                {
+                    <div class="col border rounded p-6 canvas-container style=width:200px;height:200px;">
+                        <div class="col">
+                            <div class="col-sm">
+                                <input type="range" min="@slider1Minval" max="@slider1Maxval" defaultValue="@slider1Default"
+                                       step="@slider1Step" style="background-color:cyan" @onchange="onslider1change" value="1" 
+                                       oninput="this.nextElementSibling.value = this.value" />
+                                <output>1</output>
+                            </div>
+                            <div class="col-sm">
+                                <input type="range" min="@slider2Minval" max="@slider2Maxval" defaultValue="@slider2Default"
+                                       step="@slider2Step" style="background-color:cyan" @onchange="onslider2change" value="1"
+                                       oninput="this.nextElementSibling.value = this.value" />
+                                <output>1</output>
+                            </div>
+                            <div class="col-sm">
+                                <input type="range" min="@slider3Minval" max="@slider3Maxval" defaultValue="@slider3Default"
+                                       step="@slider3Step" style="background-color:cyan" @onchange="onslider3change" value="1"
+                                       oninput="this.nextElementSibling.value = this.value" />
+                                <output>1</output>
+                            </div>
+                        </div>
+
+                        <InputRadioGroup @bind-Value=@blendode>
+
+                            <div class="col-sm">
+                                <div>
+                                    <InputRadio id="1radio" Value="1" checked="checked" />
+                                    <label for="1radio">hue</label>
+                                </div>
+
+                                <div>
+                                    <InputRadio id="2radio" Value="2" />
+                                    <label for="2radio">sat</label>
+                                </div>
+
+                                <div>
+                                    <InputRadio id="3radio" Value="3" />
+                                    <label for="3radio">luminat</label>
+                                </div>
+                                <div>
+                                    <InputRadio id="4radio" Value="4" />
+                                    <label for="4radio">color</label>
+                                </div>
+                            </div>
+
+                        </InputRadioGroup>
+
+                    </div>
+
+                }
+
+            </div>
+
+        </div>
+    </div>  <!--conteiner Ends-->
+
+    @if (showtext == true)
+    {
+        <div class="col-sm">
+
+
+
+            <div class="col border rounded p-2 canvas-container" style="width:100px;height:50px;">
+                <input type="text" min="1" style="background-color:white" name="curtext" />
+                <input type="submit" value="Refresh">
+            </div>
+
+        </div>
+    }
+
+        
+
+       
+
+
+
+
+
+        <div class="col border rounded p-2 canvas-container">
+        <!-- Button trigger modal -->
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal">
+            Download Final Image
+        </button>
+        </div>
+
+
+
+    <!-- Modal download -->
+    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Download title</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+
+                    <InputRadioGroup @bind-Value=@blendode> <!-- CHAnge var -->
+                        File Type 
+                        <div class="col-sm">
+                            <div>
+                                <InputRadio id="1radio" Value="1" checked="checked" />
+                                <label for="1radio">Jpeg</label>
+                            </div>
+
+                            <div>
+                                <InputRadio id="2radio" Value="2" />
+                                <label for="2radio">BMP</label>
+                            </div>
+
+                            <div>
+                                <InputRadio id="3radio" Value="3" />
+                                <label for="3radio">Png</label>
+                            </div>
+                            
+                        </div>
+
+                    </InputRadioGroup>
+                    <input type="range" min="@slider1Minval" max="@slider1Maxval" defaultValue="@slider1Default"
+                           step="@slider1Step" style="background-color:cyan" @onchange="onslider1change" />
+                    
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button class="btn btn-outline-success" @onclick="DownloadFileFromStream">Download</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+<input type="color" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            <!-- kanei frame -->
+
+       
+
+        <!-- 
+        <div class="container">
+            <div class="row">
+                <div class="col border rounded p-2 canvas-container">
+
+                    <SKCanvasView @ref="skiaView" OnPaintSurface="OnPaintSurfaceproc" IgnorePixelScaling="true" EnableRenderLoop="false"
+                                  @onpointerdown="OnPointerDown"
+                                  @onpointermove="OnPointerMove"
+                                  @onpointerup="OnPointerUp"
+                                  style="width:10px;height:10px; color:aquamarine" />
+
+                </div>
+            </div>
+        </div>
+        -->
+
+
+
+        
+
+
+   
+
+
+ @if (userimg != string.Empty)
+{
+        <!--
+            <div class="container">
+        <div class="row">
+            <div class="col border rounded p-2 canvas-container">
+                @if (userimg != string.Empty)
+                {
+                    <p>user_photo  **************************</p>
+                    <img id="user_photo" src=@userimg style="width:500px;height:500px;" />
+                }
+                @if (procimg != string.Empty)
+                {
+                    <p>proc_photo</p>
+                    <img id="user_photo" src=@procimg style="width:500px;height:500px;" />
+                }
+
+
+            </div>
+        </div>
+    </div>
+        -->
+}
+    
+</body>
+
+
+
+
+@code {
+    // MikeImage asas = new MikeImage();
+
+
+    int col = 0;
+    int row = 0;
+
+
+
+    int blendode = 1;
+    SKCanvasView? skiaView = null!;
+    //bool UserImageEnableRenderLoop = true;
+    bool ProcImageEnableRenderLoop = false;
+    byte[] GLuserimgBytearray = null;
+    SKBitmap USerskbitmap = null;
+    SKBitmap BitmapColoradj = null;
+
+    string userimg = string.Empty;
+    string procimg = string.Empty;
+    private string ErrorMessage = string.Empty;
+
+    float curvalue = 0.0f;
+
+    SKData snapshot;
+
+    FilterType.Filtertypes curfilter = FilterType.Filtertypes.none;
+    bool retrostyle = false;
+    bool jazzstyle = false;
+    bool vintagestyle = false;
+    bool randomstyle = false;
+
+    bool showslider = false;
+    bool showtext = false;
+
+    SKPoint? touchLocation;
+    string xpos, ypos = string.Empty;
+
+    float slider1Minval = 1;
+    float slider1Maxval = 300;
+    float slider1Default = 1;
+    float slider1Step = 1.0f;
+
+    float slider2Minval = 1;
+    float slider2Maxval = 300;
+    float slider2Default = 1;
+    float slider2Step = 1.0f;
+
+    float slider3Minval = 1;
+    float slider3Maxval = 300;
+    float slider3Default = 1;
+    float slider3Step = 1.0f;
+
+    float slidervalue1 = 0.1f;
+    float slidervalue2 = 0.1f;
+    float slidervalue3 = 0.1f;
+
+
+
+
+
+
+    async Task Onupload(InputFileChangeEventArgs e) 
+    {
+        try
+        {
+            curfilter = FilterType.Filtertypes.none;
+            ErrorMessage = string.Empty;
+
+            //using var content = new MultipartFormDataContent();
+            var file = e.File;
+            long maxFileSize = 1024 * 25000;
+            var fileContent = new StreamContent(file.OpenReadStream(maxFileSize));
+            fileContent.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType);
+            GLuserimgBytearray = await fileContent.ReadAsByteArrayAsync();
+            USerskbitmap = SKBitmap.Decode(GLuserimgBytearray);
+            // Prockbitmap = SKBitmap.Decode(GLuserimgBytearray);
+        }
+        catch (Exception er) { ErrorMessage = er.Message; }
+    }
+
+    void showloadimg(SKPaintGLSurfaceEventArgs args)
+    {
+        try
+        {
+            if (USerskbitmap != null)
+            {
+                SKImageInfo info = USerskbitmap.Info;
+                SKSurface surface = args.Surface;
+                SKCanvas canvas = surface.Canvas;
+
+
+
+                /*
+                float x = (info.Width);
+                float y = (info.Height);
+                int w = USerskbitmap.Width;
+                int h = USerskbitmap.Height;
+                */
+                canvas.Clear();
+                SKRect r = canvas.DeviceClipBounds;
+                canvas.DrawBitmap(USerskbitmap, r);
+
+                //canvas.DrawBitmap(USerskbitmap, x, y);
+                //canvas.DrawBitmap(USerskbitmap, SKRect.Create(100, 30, USerskbitmap.Width, USerskbitmap.Height));
+                //canvas.DrawBitmap(USerskbitmap, info.Rect);
+                //canvas.DrawBitmap(USerskbitmap, SKRect(a,b)
+
+                //canvas.DrawBitmap(USerskbitmap,
+
+                //  del
+                /*
+                SKData snapshot = surface.Snapshot().Encode();
+                byte[] surfaceData = snapshot.ToArray();
+                finalimg = prepareImgArraytodisplay(surfaceData);
+                // del
+                */
+
+            }
+        }
+        catch (Exception er) { ErrorMessage = er.Message; }
+
+    }
+
+
+    async Task onencodeuserimg(MouseEventArgs e)
+    {
+
+        // αυτην την μεθοδο μπορω να την χρεισιμοπ.  να γίνεται endcode η image και να γίνεται display 
+        // σε <img scr=@finalimg    και να μήν χρειάζομαι τα <SKGLView OnPaintSurface="showloadimg"  ....   
+
+        {
+            SKImage image = SKImage.FromBitmap(USerskbitmap);
+            await Task.Run(() =>   {
+                SKData data = image.Encode(SKEncodedImageFormat.Jpeg, 100); // 80 is also ok
+                byte[] bb = data.ToArray(); 
+                userimg = prepareImgArraytodisplay(bb);
+            });
+        }
+    }
+
+
+    async Task onencodeprocimg(MouseEventArgs e)  // not working   // filter aplly to canvas NOT To USerskbitmap
+    {
+
+        // αυτην την μεθοδο μπορω να την χρεισιμοπ.  να γίνεται endcode η image και να γίνεται display
+        // σε <img scr=@finalimg    και να μήν χρειάζομαι τα <SKGLView OnPaintSurface="showloadimg"  ....
+
+
+        try
+        {
+            SKImage image = SKImage.FromBitmap(USerskbitmap);
+            await Task.Run(() =>
+            {
+                SKData data = image.Encode(SKEncodedImageFormat.Jpeg, 100); // 80 is also ok
+                byte[] bb = data.ToArray();
+                procimg = prepareImgArraytodisplay(bb);
+            });
+        }
+        catch (Exception er) { ErrorMessage = er.Message + "   onencodeprocimg"; }
+
+    }
+
+
+
+
+    private string prepareImgArraytodisplay(byte[] curimgarr)
+    {
+        var base64 = Convert.ToBase64String(curimgarr);
+        var imgSrc = String.Format("data:image/gif;base64,{0}", base64); //  uploaded photo in a string base64
+        return imgSrc;
+
+
+    }
+
+
+
+    private void doGray(SKSurface cursurface,  SKCanvas curCanvas)
+    {
+        SKRect myframe = curCanvas.DeviceClipBounds;
+        curCanvas.Clear(SKColors.White);
+        using (var paint = new SKPaint())
+        {
+            paint.ColorFilter = ApplyGreyscale();
+            curCanvas.DrawBitmap(USerskbitmap, myframe, paint); //filter aplly to canvas NOT To USerskbitmap
+        }
+        snapshot = cursurface.Snapshot().Encode(); // for down load  file
+    }
+
+
+    private void doBrightness(SKSurface cursurface, SKCanvas curCanvas,float brvalue)
+    {
+        SKRect myframe = curCanvas.DeviceClipBounds;
+        curCanvas.Clear(SKColors.White);
+        using (var paint = new SKPaint())
+        {
+
+            paint.ColorFilter = ApplyBrightnesMatrix(brvalue);
+            curCanvas.DrawBitmap(USerskbitmap, myframe, paint); 
+        }
+        snapshot = cursurface.Snapshot().Encode(); // for down load  file
+    }
+
+    private void doContrast(SKSurface cursurface, SKCanvas curCanvas, float contrastvalue)
+    {
+        SKRect myframe = curCanvas.DeviceClipBounds;
+        curCanvas.Clear(SKColors.White);
+        using (var paint = new SKPaint())
+        {
+
+            paint.ColorFilter = ApplyContrastMatrix(contrastvalue);
+            curCanvas.DrawBitmap(USerskbitmap, myframe, paint);
+        }
+        snapshot = cursurface.Snapshot().Encode(); 
+    }
+
+    private void doBlur(SKSurface cursurface, SKCanvas curCanvas)
+    {
+
+        SKRect myframe = curCanvas.DeviceClipBounds;
+        var filter = SKImageFilter.CreateBlur(slidervalue1, slidervalue2); // from slider
+        using (var paint = new SKPaint())
+        {
+            paint.ImageFilter = filter;
+            curCanvas.DrawBitmap(USerskbitmap, myframe, paint); //   filter aplly to canvas NOT To USerskbitmap
+        }
+        snapshot = cursurface.Snapshot().Encode();
+    }
+
+    private void doHighContrast(SKSurface cursurface, SKCanvas curCanvas)  // mporei na ginei  filtro Blend color me 3 slider 1 to 255 value each
+    {
+        SKRect myframe = curCanvas.DeviceClipBounds;
+        float sliderval = slidervalue1;
+        byte valueR = (byte)(255 * sliderval);
+        byte valueG = (byte)(255 * sliderval);
+        byte valueB = (byte)(255 * sliderval);
+
+        SKColor mycolor = new SKColor(valueR, valueG, valueB);
+        //SKBlendMode.Difference= color binarization SKBlendMode.ColorBurn = set high contrast  SKBlendMode.ColorDodge= high brightness
+        using (var cf = SKColorFilter.CreateBlendMode(mycolor, SKBlendMode.ColorBurn))
+        using (var paint = new SKPaint())
+        {
+            paint.ColorFilter = cf;
+            curCanvas.DrawBitmap(USerskbitmap, myframe, paint);
+        }
+        snapshot = cursurface.Snapshot().Encode();
+
+
+    }
+
+
+
+
+    private unsafe void ColorAdjustment(float hueAdjust, float saturationAdjust, float luminosityAdjust)  //???????????????????
+    {
+        BitmapColoradj = new SKBitmap(USerskbitmap.Width, USerskbitmap.Height);
+        byte* srcPtr = (byte*)USerskbitmap.GetPixels().ToPointer();
+        byte* dstPtr = (byte*)BitmapColoradj.GetPixels().ToPointer();
+
+        int width = USerskbitmap.Width;       // same for both bitmaps
+        int height = USerskbitmap.Height;
+
+        SKColorType typeOrg = USerskbitmap.ColorType;
+        SKColorType typeAdj = BitmapColoradj.ColorType;
+
+        for (int row = 0; row < height; row++)
+        {
+            for (int col = 0; col < width; col++)
+            {
+                // Get color from original bitmap
+                byte byte1 = *srcPtr++;         // red or blue
+                byte byte2 = *srcPtr++;         // green
+                byte byte3 = *srcPtr++;         // blue or red
+                byte byte4 = *srcPtr++;         // alpha
+
+                SKColor color = new SKColor();
+
+                if (typeOrg == SKColorType.Rgba8888)
+                {
+                    color = new SKColor(byte1, byte2, byte3, byte4);
+                }
+                else if (typeOrg == SKColorType.Bgra8888)
+                {
+                    color = new SKColor(byte3, byte2, byte1, byte4);
+                }
+
+                // Get HSL components
+                color.ToHsl(out float hue, out float saturation, out float luminosity);
+
+                // Adjust HSL components based on adjustments
+                hue = (hue + hueAdjust) % 360;
+                saturation = Math.Max(0, Math.Min(100, saturationAdjust * saturation));
+                luminosity = Math.Max(0, Math.Min(100, luminosityAdjust * luminosity));
+
+                // Recreate color from HSL components
+                color = SKColor.FromHsl(hue, saturation, luminosity);
+
+                // Store the bytes in the adjusted bitmap
+                if (typeAdj == SKColorType.Rgba8888)
+                {
+                    *dstPtr++ = color.Red;
+                    *dstPtr++ = color.Green;
+                    *dstPtr++ = color.Blue;
+                    *dstPtr++ = color.Alpha;
+                }
+                else if (typeAdj == SKColorType.Bgra8888)
+                {
+                    *dstPtr++ = color.Blue;
+                    *dstPtr++ = color.Green;
+                    *dstPtr++ = color.Red;
+                    *dstPtr++ = color.Alpha;
+                }
+            }
+
+        }
+        //USerskbitmap = dstBitmap;
+        var sd = 0;
+    }
+
+
+    SKPaint PenRed = new SKPaint
+        {
+
+            Style = SKPaintStyle.Stroke,
+            Color = SKColors.Red,
+            StrokeWidth = 2
+        };
+
+
+    private void do3Dskrew(SKSurface cursurface, SKCanvas curCanvas)
+    {
+        SKRect myframe = curCanvas.DeviceClipBounds;
+        float xCenter = myframe.Width / 2;
+        float yCenter = myframe.Height / 2;
+
+        // Translate center to origin
+        SKMatrix matrix = SKMatrix.CreateTranslation(-xCenter, -yCenter);
+
+        // Use 3D matrix for 3D rotations and perspective
+        SKMatrix44 matrix44 = SKMatrix44.CreateIdentity();
+        matrix44.PostConcat(SKMatrix44.CreateRotationDegrees(1, 0, 0, slidervalue1)); //x
+        matrix44.PostConcat(SKMatrix44.CreateRotationDegrees(0, 1, 0, slidervalue2));  //y
+        matrix44.PostConcat(SKMatrix44.CreateRotationDegrees(0, 0, 1, slidervalue3)); //z
+
+        SKMatrix44 perspectiveMatrix = SKMatrix44.CreateIdentity();
+        perspectiveMatrix[3, 2] = -1 / (float)290;  //  ****  apo slider
+        matrix44.PostConcat(perspectiveMatrix);
+
+        // Concatenate with 2D matrix
+        SKMatrix.PostConcat(ref matrix, matrix44.Matrix);
+
+        // Translate back to center
+        SKMatrix.PostConcat(ref matrix, SKMatrix.CreateTranslation(xCenter, yCenter));
+
+        // Set the matrix and display the bitmap
+        curCanvas.SetMatrix(matrix);
+        float xBitmap = xCenter - myframe.Width / 2;
+        // float xBitmap = xCenter - canvas.DeviceClipBounds.Width / 2;
+        float yBitmap = yCenter - myframe.Height / 2;
+        //float yBitmap = yCenter - canvas.DeviceClipBounds.Height / 2;
+        curCanvas.DrawBitmap(USerskbitmap, myframe);
+        snapshot = cursurface.Snapshot().Encode(); // for down load  file
+
+    }
+
+
+    void OnPaintSurfaceproc(SKPaintSurfaceEventArgs args)
+    { 
+        if (USerskbitmap != null)
+        {
+            SKImageInfo info = USerskbitmap.Info;
+            SKSurface surface = args.Surface;
+            SKCanvas canvas = surface.Canvas;
+
+            
+
+            float x = (info.Width);
+            float y = (info.Height);
+            canvas.Clear();
+            SKRect myframe = canvas.DeviceClipBounds;
+
+            canvas.Clear(SKColors.White);
+            // Find largest size rectangle in canvas
+
+            float scale = Math.Min((float)info.Width / USerskbitmap.Width,
+            (float)info.Height / USerskbitmap.Height);
+            SKRect rect = SKRect.Create(scale * USerskbitmap.Width, scale * USerskbitmap.Height);
+            float wx = (info.Width - rect.Width) / 2;
+            float wy = (info.Height - rect.Height) / 2;
+            rect.Offset(wx, wy);
+
+            // Display bitmap
+            canvas.DrawBitmap(USerskbitmap, myframe);  //  first display the image
+
+            SKColor color = SKColor.FromHsl((float)slidervalue1, (float)slidervalue2, (float)slidervalue3);
+
+            // Use labels to display HSL and RGB color values
+            color.ToHsl(out float hue, out float sat, out float lum);
+
+            using (SKPaint paint = new SKPaint())
+            {
+                paint.Color = color;
+                if (blendode == 1)
+                    paint.BlendMode = SKBlendMode.Hue;
+
+                if (blendode == 2)
+                    paint.BlendMode = SKBlendMode.Saturation;
+
+                if (blendode == 3)
+                    paint.BlendMode = SKBlendMode.Color;
+
+                if (blendode == 4)
+                    paint.BlendMode = SKBlendMode.Luminosity;
+
+                canvas.DrawRect(myframe, paint);
+            }
+
+
+
+
+
+
+        }
+
+    }
+
+    uint MakePixel(byte red, byte green, byte blue, byte alpha) => (uint)((alpha << 24) | (blue << 16) | (green << 8) | red);
+
+
+    private void SetLuminance(int index, byte red, byte green, byte blue, byte alpha)
+    {
+        // Calculate luminance cheaply, favoring green.
+        var luminance = (byte)((40 * red + 40 * green + 40 * blue) >> 40);
+        // luminances[index] = (byte)(((luminance * alpha) >> 8) + (255 * (255 - alpha) >> 8));
+    }
+
+
+
+    // private void SetFilter(SKPaintGLSurfaceEventArgs args)
+    private void SetFilter(SKPaintSurfaceEventArgs args)
+    {
+
+        try
+        {
+            if (curfilter != FilterType.Filtertypes.none)
+            {
+                SKImageInfo info = USerskbitmap.Info;
+                SKSurface surface = args.Surface;
+                SKCanvas canvas = surface.Canvas;
+                // float x = (info.Width);
+                // float y = (info.Height);
+
+                SKRect myframe = canvas.DeviceClipBounds;  //for del
+
+
+                switch (curfilter)
+                {
+
+                    case FilterType.Filtertypes.brightness:
+                        {
+                            doBrightness(surface, canvas,slidervalue1);
+                            break;
+                        }
+
+
+                    case FilterType.Filtertypes.contrast:
+                        {
+                            doContrast(surface, canvas, slidervalue1);
+                            break;
+                        }
+
+
+                    case FilterType.Filtertypes.colortransformation:
+                        {
+                            canvas.Clear(SKColors.White);
+
+                            float scale = Math.Min((float)info.Width / USerskbitmap.Width,
+                            (float)info.Height / USerskbitmap.Height);
+                            SKRect rect = SKRect.Create(scale * USerskbitmap.Width, scale * USerskbitmap.Height);
+                            float wx = (info.Width - rect.Width) / 2;
+                            float wy = (info.Height - rect.Height) / 2;
+                            rect.Offset(wx, wy);
+
+                            // Display bitmap
+                            canvas.DrawBitmap(USerskbitmap, myframe);  //  first display the image
+
+                            SKColor color = SKColor.FromHsl((float)slidervalue1, (float)slidervalue2, (float)slidervalue3);
+
+                            // Use labels to display HSL and RGB color values
+                            color.ToHsl(out float hue, out float sat, out float lum);
+
+                            using (SKPaint paint = new SKPaint())
+                            {
+                                paint.Color = color;
+                                if (blendode == 1)
+                                    paint.BlendMode = SKBlendMode.Hue;
+
+                                if (blendode == 2)
+                                    paint.BlendMode = SKBlendMode.Saturation;
+
+                                if (blendode == 3)
+                                    paint.BlendMode = SKBlendMode.Color;
+
+                                if (blendode == 4)
+                                    paint.BlendMode = SKBlendMode.Luminosity;
+
+                                canvas.DrawRect(myframe, paint);
+                            }
+
+                            break;
+                        }
+
+
+
+                    case FilterType.Filtertypes.grayscale:
+                        {
+                            doGray(surface, canvas);
+                            curfilter = FilterType.Filtertypes.none;
+                            break;
+                        }
+                    case FilterType.Filtertypes.blur:
+                        {
+                            canvas.Clear();
+                            doBlur(surface, canvas);
+                            //  curfilter = FilterType.Filtertypes.none;
+                            break;
+                        }
+
+
+                    
+
+                    case FilterType.Filtertypes.coloradjustmnet1:
+                        {
+                            canvas.Clear(SKColors.White);
+                            // Find largest size rectangle in canvas
+
+                            float scale = Math.Min((float)info.Width / USerskbitmap.Width,
+                            (float)info.Height / USerskbitmap.Height);
+                            SKRect rect = SKRect.Create(scale * USerskbitmap.Width, scale * USerskbitmap.Height);
+                            float wx = (info.Width - rect.Width) / 2;
+                            float wy = (info.Height - rect.Height) / 2;
+                            rect.Offset(wx, wy);
+
+                            // Display bitmap
+                            canvas.DrawBitmap(USerskbitmap, myframe);  //  first display the image
+
+                            SKColor color = SKColor.FromHsl((float)slidervalue1,(float)slidervalue2,(float)slidervalue3);
+
+                            // Use labels to display HSL and RGB color values
+                            color.ToHsl(out float hue, out float sat, out float lum);
+
+
+
+                            using (SKPaint paint = new SKPaint())
+                            {
+                                paint.Color = color;
+                                paint.BlendMode = SKBlendMode.Hue;
+                                canvas.DrawRect(myframe, paint);
+                            }
+
+
+
+
+
+
+                            /*
+                            using (var cf = SKColorFilter.CreateHighContrast(false, SKHighContrastConfigInvertStyle.NoInvert, 0.135f))
+                            using (var paint = new SKPaint())
+                                {
+                                paint.ColorFilter = cf;
+                                canvas.DrawBitmap(USerskbitmap, myframe, paint); //   filter aplly to canvas NOT To USerskbitmap
+                            }
+                            snapshot = surface.Snapshot().Encode(); // for down load  file
+
+                            //curfilter = FilterType.Filtertypes.none;
+                            */
+                            break;
+
+                        }
+
+                    case FilterType.Filtertypes.coloradjustmnet:
+                        {
+                            canvas.Clear();
+                            if (BitmapColoradj != null)
+                            {
+                                canvas.DrawBitmap(BitmapColoradj, myframe);
+                            }
+                            break; 
+                        }
+                    case FilterType.Filtertypes.shepia:
+                        {
+
+                            canvas.Clear(SKColors.White);
+                            using (var paint = new SKPaint())
+                            {
+
+                                paint.ColorFilter = ApplySephiaMatrix();
+                                canvas.DrawBitmap(USerskbitmap, myframe, paint); //   filter aplly to canvas NOT To USerskbitmap
+                            }
+                            snapshot = surface.Snapshot().Encode(); // for down load  file
+                            curfilter = FilterType.Filtertypes.none;
+                            break;
+                        }
+                    case FilterType.Filtertypes.randommatrix:
+                        {
+
+                            canvas.Clear(SKColors.White);
+                            using (var paint = new SKPaint())
+                            {
+                                paint.ColorFilter = ApplyRandomMatrix();
+                                canvas.DrawBitmap(USerskbitmap, myframe, paint); //   filter aplly to canvas NOT To USerskbitmap
+                            }
+                            snapshot = surface.Snapshot().Encode(); // for down load  file
+                            curfilter = FilterType.Filtertypes.none;
+                            break;
+                        }
+
+
+
+                    case FilterType.Filtertypes.postarize:
+                        {
+                            byte[] colorTable = new byte[256];
+                            for (int i = 0; i < 256; i++)
+                            {
+                                colorTable[i] = (byte)(0xC0 & i);
+                            }
+                            //using (var cf = SKColorFilter.CreateTable(null, colorTableR, colorTableG, colorTableB))  // Posterize  not ready
+                            using (var cf = SKColorFilter.CreateTable(null, null, colorTable, colorTable))  // Posterize  not ready
+                            using (var paint = new SKPaint())
+                            {
+                                paint.ColorFilter = cf;
+                                canvas.DrawBitmap(USerskbitmap, myframe, paint); //   filter aplly to canvas NOT To USerskbitmap
+                            }
+                            snapshot = surface.Snapshot().Encode();
+                            curfilter = FilterType.Filtertypes.none;
+                            break;
+                        }
+
+                    case FilterType.Filtertypes.postarizestyles:
+                        {
+                            byte difr = 0;
+                            byte difg = 0;
+                            byte difb = 0;
+
+                            //ErrorMessage = difr + "  " + difg + "  " + difb;
+
+                            if (jazzstyle)
+                            {
+                                difr = 240;
+                                difg = 191;
+                                difb = 194;
+                            }
+
+                            if (retrostyle)
+                            {
+                                difr = 46;
+                                difg = 9;
+                                difb = 138;
+                            }
+
+                            if (vintagestyle)
+                            {
+                                difr = 113;
+                                difg = 151;
+                                difb = 134;
+                            }
+
+                            if (randomstyle)
+                            {
+                                Random myr = new Random();
+                                int r = myr.Next(1, 255);
+                                int g = myr.Next(1, 255);
+                                int b = myr.Next(1, 255);
+
+                                difr = (byte)r;
+                                difg = (byte)g;
+                                difb = (byte)b;
+
+                                //ErrorMessage = difr + "  " + difg + "  " + difb;
+
+                            }
+
+                            canvas.Clear();
+                            byte[] colorTableR = new byte[256];
+                            for (int i = 0; i < 256; i++)
+                            {
+                                colorTableR[i] = (byte)(difr & i);  //192
+                                                                    //byte ccc = (byte)(0xC0 & i); // 192
+
+                            }
+                            byte[] colorTableG = new byte[256];
+                            for (int i = 0; i < 256; i++)
+                            {
+                                colorTableG[i] = (byte)(difg & i);
+                            }
+
+                            byte[] colorTableB = new byte[256];
+                            for (int i = 0; i < 256; i++)
+                            {
+                                colorTableB[i] = (byte)(difb & i);
+                            }
+
+
+                            /*
+                            var ct = new byte[256];
+                            for (var i = 0; i < 256; ++i)
+                            {
+                            var x1 = (i - 96) * 255 / 64;
+                          //  var x1 = (i - 88) * 255 / 64;
+                            ct[i] = x1 < 0 ? (byte)0 : x1 > 255 ? (byte)255 : (byte)x1;
+                        }
+                        //  using (var cf = SKColorFilter.CreateTable(null, ct, null, null))
+                            */
+
+
+
+                            // using (var cf = SKColorFilter.CreateTable(null, null, colorTableG, colorTableB))  // Posterize  not ready
+                            using (var cf = SKColorFilter.CreateTable(null, colorTableR, colorTableG, colorTableB))  // OK *** Posterize  not ready
+
+                            using (var paint = new SKPaint())
+                            {
+                                paint.ColorFilter = cf;
+                                canvas.DrawBitmap(USerskbitmap, myframe, paint); //   filter aplly to canvas NOT To USerskbitmap
+                            }
+                            snapshot = surface.Snapshot().Encode();
+                            curfilter = FilterType.Filtertypes.none;
+                            break;
+                        }
+
+                    case FilterType.Filtertypes.highcontrast:
+                        {
+
+                            canvas.Clear();
+                            doHighContrast(surface, canvas);
+                            //  curfilter = FilterType.Filtertypes.none; 
+
+
+                            /*  periergo ???????
+                            var center1 = new SKPoint3(0.2f, 1.2f, 0.9f);
+                            var center2 = new SKPoint3(0.9f, 1.2f, 0.9f);
+                            var color1 = SKColors.Red;
+                            var color2 = SKColors.Green;
+                            var filter = SKImageFilter.CreateSpotLitSpecular(center1, center2, 0.8f, 0.1f, color1,  0.38f, 0.2f,0.89f);
+                            */
+
+
+
+
+
+                            /*    ok 
+                            canvas.Clear();
+                            float sliderval = curvalue;    //= curvalue * 20;
+                            byte value = (byte)(255 * sliderval); // from slider
+
+                            SKColor mycolor = new SKColor(value, value, value);
+                            //SKBlendMode.Difference= color binarization SKBlendMode.ColorBurn = set high contrast  SKBlendMode.ColorDodge= high brightness
+                            using (var cf = SKColorFilter.CreateBlendMode(mycolor, SKBlendMode.Modulate))  
+                            using (var paint = new SKPaint())
+                            {
+                            paint.ColorFilter = cf;
+                            canvas.DrawBitmap(USerskbitmap, myframe, paint);
+                            }
+                            */
+
+
+
+                            //change HSL    tipota to ideetaio na to kano me  3  msliders  --Color transormation w / 3 sliders 
+
+                            //canvas.Save();
+                            //canvas.Restore();
+                            /*
+                            Random rr = new Random();
+                            int a = rr.Next(1, 360);
+                            float hval = (float)a;
+
+                            Random rr1 = new Random();
+                            int b = rr1.Next(1, 100);
+                            float lval = (float)b;
+
+                            Random rr2 = new Random();
+                            int c = rr1.Next(1, 100);
+                            float sval = (float)c;
+                            */
+
+
+
+
+                        /* 3 sliders 
+                        * 
+                        float hval = (float)rangevalue1;
+                            float sval = (float)rangevalue2;
+                            float lval = (float)rangevalue3;
+
+                            SKColor mycolor = SKColor.FromHsl(hval, sval, lval);
+
+                            mycolor.ToHsl(out float hue, out float sat, out float lum);
+
+                            using (var cf = SKColorFilter.CreateBlendMode(mycolor, SKBlendMode.ColorBurn))
+                            using (var paint = new SKPaint())
+                            {
+                            paint.ColorFilter = cf;
+                            canvas.DrawBitmap(USerskbitmap, myframe,paint);
+                            }
+                            snapshot = surface.Snapshot().Encode(); // for down load  file
+                            */
+
+
+                            /*   this is OK UNCooment 
+                            if (curvalue ==0) { curvalue = 0.115f; }
+
+                            //   miazei me brighne t - contrast ???
+
+                            //using (var cf = SKColorFilter.CreateLumaColor())
+                            var c1 = SKColors.Chocolate;
+                            using (var cf = SKColorFilter.CreateBlendMode(c1,SKBlendMode.Difference))
+                            using (var cf1 = SKColorFilter.CreateHighContrast(false, SKHighContrastConfigInvertStyle.NoInvert, curvalue)) //  OK OK
+                            using (var finalfilter = SKColorFilter.CreateCompose(cf, cf1))   // double filtering
+                                using (var paint = new SKPaint())
+                                {
+                                paint.ColorFilter = finalfilter;
+                                canvas.DrawBitmap(USerskbitmap, myframe, paint); //   filter aplly to canvas NOT To USerskbitmap
+                            }
+                            snapshot = surface.Snapshot().Encode();
+                            // curfilter = FilterType.Filtertypes.none;  to ebgala gia to slider -- gia na xananpainei  edo meta to change tou slider
+                            this is OK UNCooment
+                            */
+
+                            break;
+
+                        }
+                    case FilterType.Filtertypes.pastel:
+                        {
+                            canvas.Clear(SKColors.White);
+                            using (var paint = new SKPaint())
+                            {
+                                paint.ColorFilter = ApplyPastel();
+                                canvas.DrawBitmap(USerskbitmap, myframe, paint); //   filter aplly to canvas NOT To USerskbitmap
+                            }
+                            snapshot = surface.Snapshot().Encode(); // for down load  file
+                            curfilter = FilterType.Filtertypes.none;
+                            break;
+                            /*
+                            * 
+                            var paint = new SKPaint();  // using
+                            paint.ColorFilter = ApplyPastel();
+                            canvas.DrawBitmap(USerskbitmap, myframe, paint);
+                            curfilter = FilterType.Filtertypes.none;
+                        */
+                        }
+
+
+                    case FilterType.Filtertypes.embossed:
+                        {
+                            
+                            canvas.Clear(SKColors.White);
+                            float[] kernel = new float[25]  {-1.008f,  -0.23f, -.5f,  0,  0,
+                                                              0, -1, -.5f,  0,  0,
+                                                           -.5f, -.5f,  1.5f,  .5f,  .5f,
+                                                              0,  0,  .5f,  1,  0,
+                                                              0.23f,  0.45f,  0.535f ,0,0};
+
+                            float[] kernel1 = new float[] {-2, -1, 0,   
+                                                            -1, 1, 1,
+                                                            0, 1, 2};
+
+
+                            float[] kernel2 = new float[] {-2.55f, -1.029f, 0,
+                                                            -1, 1, 1,
+                                                            0, 1.45f, 1.50f};
+
+                            //var shader = CreateEngravedShader(USerskbitmap.Width, USerskbitmap.Height, 1000, 20.5f);
+                            var embossed = SKImageFilter.CreateMatrixConvolution(new SKSizeI(3, 3), kernel2, 0.94f, 0.9f, new SKPointI(0, 0), SKShaderTileMode.Clamp, false);
+                            using (var paint = new SKPaint())
+                            {
+                                paint.ImageFilter = embossed;
+                                //paint.Style = SKPaintStyle.StrokeAndFill;
+                                //paint.Shader = shader;
+
+                                /*
+                                paint.Shader = SKShader.CreateLinearGradient(
+                                    new SKPoint(0, 0),
+                                    new SKPoint(USerskbitmap.Width, USerskbitmap.Height),
+                                    new SKColor[] { paint.Color.WithAlpha(0),
+                                                    paint.Color.WithAlpha(0x80) },
+                                    null,
+                                    SKShaderTileMode.Clamp);
+
+                                SKFont fff = new SKFont(SKTypeface.Default, 60, 1, 0);
+                                canvas.DrawText("TEST ΔΟΚΙΜΗ", 90, 100, fff, paint);
+                                */
+                                canvas.DrawBitmap(USerskbitmap, myframe, paint);
+                            }
+                            snapshot = surface.Snapshot().Encode(); 
+                            curfilter = FilterType.Filtertypes.none;
+                            break;
+
+                        }
+                    
+
+
+                    
+                    case FilterType.Filtertypes.dilate:
+                        {
+
+                            if (curvalue == 0) { curvalue = 2; }
+
+
+                            canvas.Clear(SKColors.White);
+                            using (var filter = SKImageFilter.CreateDilate(curvalue *1.2f, curvalue*1.2f))      // miazi me elaiografia  IS OK  ****** */
+                                                                                                                   //using (var filter = SKImageFilter.CreateErode(curvalue * 1.20f, curvalue * 2))
+                            using (var paint = new SKPaint())
+                            {
+                                paint.ImageFilter = filter;
+                                canvas.DrawBitmap(USerskbitmap, myframe, paint); //   filter aplly to canvas NOT To USerskbitmap
+                            }
+
+                            snapshot = surface.Snapshot().Encode();
+                            // curfilter = FilterType.Filtertypes.none;  //to ebgala gia to slider -- gia na xananpainei  edo meta to change tou slider
+                            break;
+                        }
+                    case FilterType.Filtertypes.oilpaint:
+                        {
+
+                            if (curvalue == 0) { curvalue = 2; }
+
+                            canvas.Clear(SKColors.White);
+                            using (var filter = SKImageFilter.CreateErode(curvalue * 1.4f, curvalue * 1.4f))
+                            using (var paint = new SKPaint())
+                            {
+                                paint.ImageFilter = filter;
+                                canvas.DrawBitmap(USerskbitmap, myframe, paint); //   filter aplly to canvas NOT To USerskbitmap
+                            }
+
+                            snapshot = surface.Snapshot().Encode();
+                            //curfilter = FilterType.Filtertypes.none;  //to ebgala gia to slider -- gia na xananpainei  edo meta to change tou slider
+                            break;
+
+
+                            /*
+                            using (var filter1 = SKImageFilter.CreateBlur(2, 2))
+                            using (var filter = SKImageFilter.CreateArithmetic(0.1f, 1.0f, 0.6f, 1.4f, false, filter1))
+                                */
+
+
+
+
+
+
+                                /*  2 filtra 
+                                using (var filter1 = SKImageFilter.CreateBlur(2, 2))
+                        using (var filter2 = SKImageFilter.CreateErode(curvalue * 2, curvalue * 2))
+
+                            using (var filter = SKImageFilter.CreateMerge(filter1, filter2))
+                            */
+
+                        /*   bazei ena tetragono apo stin image 
+                        using (var annotationCanvas = new SKCanvas(USerskbitmap))
+                        using (var paint = new SKPaint())
+                            {
+                            paint.StrokeWidth = 3;
+                            paint.Color = SKColor.FromHsl(10, 10, 23);
+                            paint.Style = SKPaintStyle.Stroke;
+
+                            var face = SKRectI.Create(100, 50, 190, 170);
+                            annotationCanvas.DrawRect(face, paint);
+                            }
+                            canvas.DrawBitmap(USerskbitmap, 10, 10);
+                            */
+
+
+
+
+
+
+
+                            /*   kanei blur mono mesa se ena teragono rect
+                            canvas = new SKCanvas(USerskbitmap);
+
+                            SKRect r1 = new SKRect(1, 1, 400, 400);
+                            SKRoundRect rrr = new SKRoundRect(r1);
+                            canvas.ClipRoundRect(rrr, antialias: true);
+
+                            using var paint = new SKPaint();
+                            paint.IsAntialias = true;
+                            paint.ImageFilter = SKImageFilter.CreateBlur(2, 2);
+
+                            canvas.DrawBitmap(USerskbitmap, 0, 0, paint);
+                            */
+
+                            /*  unknown effect
+                            SKColor a = new SKColor(10, 10, 10);
+                            SKColor b = new SKColor(130, 120, 20);
+                            using (var cf = SKColorFilter.CreateLighting(a,b))
+                            //using (var cf = SKColorFilter.CreateLighting(SKColor.FromHsl(1, 12, 1), SKColor.FromHsl(255, 255, 255)) )
+                            */
+
+
+
+
+
+                            /*
+                            using (var cf =  SKColorFilter.CreateColorMatrix(new float[]  //  light pastel  works OK
+                                  { 0.75f, 0.25f, 0.25f, 0, 0,
+                                  0.25f, 0.75f, 0.25f, 0, 0,
+                                  0.25f, 0.25f, 0.75f, 0, 0,
+                                  1, 0, 0, 1, 0 }))
+                                  */
+
+
+
+
+                        }
+                    case FilterType.Filtertypes.noimplement2:
+                        {
+
+                            canvas.Clear();
+
+
+
+                            curfilter = FilterType.Filtertypes.none;
+                        }
+                        break;
+
+                    case FilterType.Filtertypes.sketch1:
+                        {
+                            // paparia SKImageFilter.CreateAlphaThreshold(region, 0.325f, 0.8962f,f1))
+                            // SKRectI region = new SKRectI((int)(myframe.Left-50), (int)(myframe.Top-50),(int)(myframe.Right-50), (int)(myframe.Bottom-50));
+                            try
+                            {
+
+                                canvas.Clear(SKColors.White);
+
+                                SKBitmap image = USerskbitmap.Copy();
+                                SKPaint paint = new SKPaint();
+
+                                // var blurfilter = SKImageFilter.CreateBlur(0.2f, 0.2f);
+                                //   paint.ImageFilter = blurfilter;  // first paint
+
+                                //  SKColorFilter grayFilter = SKColorFilter.CreateColorMatrix(colorMatrix);
+                                //  paint.ColorFilter = grayFilter;  // secont paint
+
+
+                                //   var erodefilter = SKImageFilter.CreateErode(0.1f, 0.1f);
+                                //    paint.ImageFilter = erodefilter;  // third  paint
+
+                                IntPtr pixelsAddr = image.GetPixels();
+                                int width = image.Width;
+                                int height = image.Height;
+
+                                // Get the bytes per pixel
+                                int bytesPerPixel = image.BytesPerPixel;
+
+
+                                unsafe
+                                {
+                                    byte* mypixels = (byte*)pixelsAddr;
+                                    for (int y = 0; y < height; y++)
+                                    {
+                                        for (int x = 0; x < width; x++)
+                                        {
+                                            // Get the pixel color
+                                            byte b = mypixels[(y * width + x) * bytesPerPixel];
+                                            byte g = mypixels[(y * width + x) * bytesPerPixel + 1];
+                                            byte r = mypixels[(y * width + x) * bytesPerPixel + 2];
+                                            //  byte a = mypixels[(y * width + x) * bytesPerPixel + 3];
+
+                                            // Convert the RGB color to grayscale using the formula: grayscale = 0.2989 * r + 0.5870 * g + 0.1140 * b
+                                            //byte grayscale = (byte)(0.2989 * r + 0.5870 * g + 0.1140 * b);
+
+                                            var newbyte = (byte)(255 - r) + (255 - g) + (255 - b);
+                                            // var newbyte = (byte)(55 - r) + (155 - g) + (94 - b);  ok
+                                            // var newbyte = (byte)(95 - r+g) + (155 - g) + (94 - b);   OK
+
+                                            //var newbyte = (byte)(255 + r) + (255 + g) + (255 + b);
+                                            // Invert the grayscale value
+                                            byte inverted = (byte)(newbyte);
+
+                                            // Set the new RGB values to the inverted grayscale value
+                                            mypixels[(y * width + x) * bytesPerPixel] = inverted;
+                                            mypixels[(y * width + x) * bytesPerPixel + 1] = inverted;
+                                            mypixels[(y * width + x) * bytesPerPixel + 2] = inverted;
+
+                                            // Set the alpha value to 255 (fully opaque)
+                                            //    mypixels[(y * width + x) * bytesPerPixel + 3] = 255;
+                                        }
+                                    }
+                                }
+
+
+                                //  paint.ImageFilter = SKImageFilter.CreateAlphaThreshold(region, 0.123f, 1.434f);
+                                canvas.DrawBitmap(image, myframe, paint);  // final display
+
+                                snapshot = surface.Snapshot().Encode(); // for down load  file
+                                curfilter = FilterType.Filtertypes.none;
+                            }
+                            catch (Exception er) { ErrorMessage = er.Message + "  sketch1"; }
+                            break;
+                        }
+
+                    case FilterType.Filtertypes.sketch2:
+                        {
+                            canvas.Clear();
+
+                            var contrast = 0.0523f;
+                            var brightness = -0.2f;
+                            //SKBitmap image = USerskbitmap.Copy();
+
+                            byte valueR = (byte)(255 * slidervalue1); // 255
+                            byte valueG = (byte)(255 * slidervalue2);
+                            byte valueB = (byte)(255 * slidervalue3);
+
+                            SKColor mycolor = new SKColor(valueR, valueG, valueB);
+
+                            float[] ar = new float[9] { 1, 2, 3,4,5,6,7,8,9 };
+                            SKMatrix mt = new SKMatrix(ar);
+
+                            using (var grayf = ApplyGreyscale())
+                            //using (var contrastf = ApplyContrastMatrix(1.0f))
+                            using (var invertf = ApplyInvert(0.0232f))
+                            //using (var invertf = ApplyInvert(-100.00956f))
+                            using (var blendf = SKColorFilter.CreateBlendMode(mycolor, SKBlendMode.Saturation))
+                            using (var hcontrastf = SKColorFilter.CreateHighContrast(true, SKHighContrastConfigInvertStyle.NoInvert, contrast))
+                            using (var colorf1 = SKColorFilter.CreateCompose(grayf, invertf))
+                            using (var colorf2 = SKColorFilter.CreateCompose(colorf1, hcontrastf))
+                            using (var colorf3 = SKColorFilter.CreateCompose(colorf2, blendf))
+
+                            using (var erodeFilter = SKImageFilter.CreateErode(2.5f, 1.5f)) //   slideers 
+                            using (var dilateFilter = SKImageFilter.CreateDilate(0.9f, 3.4f, erodeFilter))
+                            using (var blurFilter = SKImageFilter.CreateBlur(0.3f, 0.2f, dilateFilter))
+
+
+
+                            using (var finalf = SKImageFilter.CreateMatrix(mt,SKFilterQuality.High,blurFilter))
+
+                            using (var paint = new SKPaint())
+                            {
+                                paint.ColorFilter = colorf3;   //    2 filter kai image kai color
+                                paint.ImageFilter = blurFilter;
+                                canvas.DrawBitmap(USerskbitmap, myframe, paint); //filter aplly to canvas NOT To USerskbitmap
+                            }
+
+                            snapshot = surface.Snapshot().Encode(); // for down load  file
+
+
+                            /*
+                            * 
+                            var colorFilter = SKColorFilter.CreateColorMatrix(new float[] { 0, 0, 0, 0, 255,
+                            0, 0, 0, 0, 255,
+                            0, 0, 0, 0, 255,
+                            0, 0, 0, 1, 0 });
+
+                            */
+
+
+
+                            // Save the output image
+                            //using var image = surface.Snapshot();
+                            //using var outputStream = new FileStream("output_image.jpg", FileMode.Create);
+                            //  image.Encode(SKEncodedImageFormat.Jpeg, 80).SaveTo(outputStream);
+
+
+
+
+
+                            /*  OK
+                            // Increase the contrast by applying the formula to each RGB channel
+                            byte newB = (byte)Math.Max(0, Math.Min(255, midPoint + contrastFactor * (b - midPoint)));
+                            byte newG = (byte)Math.Max(0, Math.Min(255, midPoint + contrastFactor * (g - midPoint)));
+                            byte newR = (byte)Math.Max(0, Math.Min(255, midPoint + contrastFactor * (r - midPoint)));
+
+                            // Set the new RGB values back into the pixel data buffer
+                            mypixels[(y * width + x) * bytesPerPixel] = newB;
+                            mypixels[(y * width + x) * bytesPerPixel + 1] = newG;
+                            mypixels[(y * width + x) * bytesPerPixel + 2] = newR;
+
+                            */
+
+
+
+
+                            // Set the alpha value to 255 (fully opaque)
+                          //    mypixels[(y * width + x) * bytesPerPixel + 3] = 255;
+
+
+
+
+
+
+
+
+
+
+                            /*
+                            //  IS OK -- Increase the brightness by adding a fixed value to each RGB channel
+                         byte newB = (byte)Math.Min(255, b + brightnessIncrease);
+                         byte newG = (byte)Math.Min(255, g + brightnessIncrease);
+                 byte newR = (byte)Math.Min(255, r + brightnessIncrease);
+
+                             // Set the new RGB values back into the pixel data buffer
+                             mypixels[(y * width + x) * bytesPerPixel] = newB;
+                             mypixels[(y * width + x) * bytesPerPixel + 1] = newG;
+                             mypixels[(y * width + x) * bytesPerPixel + 2] = newR;
+
+                                 // Set the alpha value to 255 (fully opaque)
+                                 mypixels[(y * width + x) * bytesPerPixel + 3] = 255;
+                                 //  IS OK -- Increase the brightness by adding a fixed value to each RGB channel
+                            */
+                            // mypixels[(y * width + x) * bytesPerPixel + 3] = 100; //  make transparensy
+                                /*
+
+                        }
+                            }
+                                }
+
+    // Save the modified image
+    //  bitmap.Save("modified_image.png");
+                                }
+
+
+
+
+    // add brighness     slow 
+    /*
+    int addBright = 50;
+    // Get the pixel array
+    SKColor[] pixels = USerskbitmap.Pixels;
+
+    // Loop through each pixel and modify it
+    for (int i = 0; i < pixels.Length; i++)
+    {
+    SKColor pixel = pixels[i];
+
+
+
+
+    int red = pixel.Red % addBright;
+    int green = pixel.Green % addBright;
+    int blue = (pixel.Blue % addBright ) + addBright;
+
+    if (red < 0) red = 0;
+    if (red > 255) red = 255;
+
+    if (green < 0) green = 0;
+    if (green > 255) green = 255;
+
+    if (blue < 0) blue = 0;
+    if (blue > 255) blue = 255;
+
+
+    /*
+    Modify the red, green, and blue channels   san aktonografia 
+    red = 255 - red;
+    green = 255 - green;
+    blue = 255 - blue;
+
+
+    // Create a new pixel with the modified channels
+    SKColor newPixel = new SKColor((byte)red, (byte)green, (byte)blue, pixel.Alpha);
+    pixels[i] = newPixel;
+                                }
+
+    // Update the bitmap with the modified pixels
+    USerskbitmap.Pixels = pixels;
+    canvas.DrawBitmap(USerskbitmap, myframe);
+            */
+
+
+
+                        }
+                        break;
+                    case FilterType.Filtertypes.sketch3:   //vitro style ????
+                        {
+                            using (SKImage image = SKImage.FromBitmap(USerskbitmap))
+                            {
+                                SKData data = image.Encode();
+                                var spann = data.AsSpan();
+                            }
+
+
+                            canvas.Clear();
+
+                            var contrast = 0.0523f;
+                            byte valueR = (byte)(slidervalue1);
+                            byte valueG = (byte)(slidervalue2);
+                            byte valueB = (byte)(slidervalue3);
+
+                            double unn = Math.Sqrt(slidervalue1 * slidervalue2 * slidervalue3);
+                            byte idms = (byte)(unn);
+
+                            byte[] colorTableR = new byte[256];
+                            byte[] colorTableG = new byte[256];
+                            byte[] colorTableB = new byte[256];
+                            for (int i = 0; i < 256; i++)
+                            {
+                                colorTableR[i] = (byte)(idms * i);
+                                colorTableG[i] = (byte)(idms * i);
+                                colorTableB[i] = (byte)(idms * i);
+                            }
+
+                            using (var hcontrastf = SKColorFilter.CreateHighContrast(false, SKHighContrastConfigInvertStyle.NoInvert, contrast))
+                            using (var colorf1 = SKColorFilter.CreateTable(null, colorTableR, colorTableG, colorTableB))
+                            using (var colorf3 = SKColorFilter.CreateCompose(hcontrastf, colorf1))
+
+                            using (var erodeFilter = SKImageFilter.CreateErode(0.5f, 0.5f)) //   slideers
+                            using (var dilateFilter = SKImageFilter.CreateDilate(0.5f, 0.5f, erodeFilter))
+                            using (var blurFilter = SKImageFilter.CreateBlur(0.2f, 0.2f, dilateFilter))
+
+
+
+                            using (var paint = new SKPaint())
+                            {
+                                paint.ColorFilter = colorf3;   //    2 filter kai image kai color
+                                paint.ImageFilter = blurFilter;
+
+                                canvas.DrawBitmap(USerskbitmap, myframe, paint); //filter aplly to canvas NOT To USerskbitmap
+
+                            }
+                            snapshot = surface.Snapshot().Encode(); // for down load  file
+                            break;
+                        }
+
+                    case FilterType.Filtertypes.edge: 
+                        {
+                            //  https://github.com/mono/SkiaSharp/issues/958
+
+                            // OK Alla slow
+                            canvas.Clear(SKColors.AliceBlue);
+                            bool keeporiginal = false;
+                            SKBitmap image = new SKBitmap(USerskbitmap.Width, USerskbitmap.Height);
+                            /*
+                            doGray(surface, canvas);
+                            //canvas.DrawBitmap(USerskbitmap, myframe);
+                            snapshot = surface.Snapshot().Encode();
+                            SKBitmap imagegray = SKBitmap.Decode(snapshot.AsStream());
+                            */
+                            SKBitmap imagegray = USerskbitmap.Copy(); ;
+                            USerskbitmap.ScalePixels(imagegray, SKFilterQuality.Low);
+                            for (int i = 0; i < image.Width; i++)
+                            {
+                                for (int j = 0; j < image.Height; j++)
+                                {
+                                    // SKColor pixel = imagegray.GetPixel(i, j);
+
+                                    SKColor cr = imagegray.GetPixel(i + 1, j);
+                                    SKColor cl = imagegray.GetPixel(i - 1, j);
+                                    SKColor cu = imagegray.GetPixel(i, j - 1);
+                                    SKColor cd = imagegray.GetPixel(i, j + 1);
+                                    int dx = 0;
+                                    int dy = 0;
+                                    dx = (int)(cr.Red * 0.3 + cr.Green * 0.59 + cr.Blue * 0.11 - (cl.Red * 0.3 + cl.Green * 0.59 + cl.Blue * 0.11));
+                                    dy = (int)(cd.Red * 0.3 + cd.Green * 0.59 + cd.Blue * 0.11 - (cu.Red * 0.3 + cu.Green * 0.59 + cu.Blue * 0.11));
+                                    double power = Math.Sqrt(dx * dx + dy * dy);
+                                    if (power > 40)
+                                    {
+                                        SKColor c = SKColors.Black; //   outline
+                                        image.SetPixel(i, j, c);
+                                    }
+                                    else
+                                    {
+                                        if (!keeporiginal)
+                                        {
+                                            // SKColor c1 = SKColors.DimGray; // to adeio meros
+                                            //image.SetPixel(i, j, c1);
+
+                                        }
+                                        else
+                                        {
+                                            // SKColor currentcolor = imagegray.GetPixel(i, j);
+                                            //  image.SetPixel(i, j, currentcolor);
+                                        }
+                                    }
+
+                                }
+                            }
+
+
+                            canvas.DrawBitmap(image, myframe);
+                            snapshot = surface.Snapshot().Encode();
+                            break;
+                        }
+
+
+                }
+
+
+
+            }
+
+        }
+        catch (Exception er) { ErrorMessage = er.Message + col.ToString()   +    "  row"  +row.ToString(); }
+    }
+
+
+
+
+    private static SKShader CreateEngravedShader(int width, int height, int depth, float lightness)
+    {
+
+        try
+        {
+            // Create an array to hold the colors for the engraved effect
+            var colors = new SKColor[depth * 2 + 1];
+
+            // Calculate the colors for each level of depth
+            for (int i = 0; i <= depth * 2; i++)
+            {
+                var gray = (byte)Math.Max(0, Math.Min(255, (int)(255 * (1 - lightness * i / (depth * 2)))));
+                colors[i] = new SKColor(gray, gray, gray);
+            }
+
+            // Create a color table from the array of colors
+            //var colorTable = SKColorTable
+
+            // Create a matrix to transform the gradient
+            var matrix = SKMatrix.CreateScale(1f / width, 1f / height);
+
+            // Create a gradient to simulate the engraved effect
+            SKShader gradient = SKShader.CreateLinearGradient(new SKPoint(0, 0), new SKPoint(width, height), colors, null, SKShaderTileMode.Repeat, matrix);
+
+            //SKShader gradient1 = SKShader.CreatePerlinNoiseTurbulence(0.232f, 0.992f, 10, 2.3f);
+
+
+            return gradient;
+        }
+        catch (Exception er) {
+            string  ErrorMessage = er.Message;
+            return null;
+        }
+
+    }
+
+
+
+
+
+
+    private SKColorFilter ApplyGreyscale()
+    {
+
+        /*/
+            var crskata = SKColorFilter.CreateColorMatrix(new float[]{ 
+             -1, 0, 0, 0, 0,
+             0, -1, 0, 0, 0,
+             0, 0, -1, 0, 0,
+        0, 0, 0, 1, 0});
+        */
+        /*/
+        var kernel = SKColorFilter.CreateColorMatrix( new float[]
+        {
+        1.0f,  4.0f,   6.0f,  4.0f, 1.0f,
+        4.0f, 16.0f,  24.0f, 16.0f, 4.0f,
+        6.0f, 24.0f,-476.0f, 24.0f, 6.0f,
+        4.0f, 16.0f,  24.0f, 16.0f, 4.0f,
+        1.0f,  4.0f,   6.0f,  4.0f, 1.0f
+                           });
+
+        */
+        var cf = SKColorFilter.CreateColorMatrix(new float[20]   //gray-shade = 0.2126·R + 0.7152·G + 0.0722·B
+                               { 0.2126f, 0.7152f, 0.0722f, 0, 0,
+                                 0.2126f, 0.7152f, 0.0722f, 0, 0,
+                                 0.2126f, 0.7152f, 0.0722f, 0, 0,
+                                 0,             0,       0, 1, 0  });
+        return cf;
+    }
+
+    private SKColorFilter ApplyRandomMatrix()
+    {
+
+        var cf = SKColorFilter.CreateColorMatrix(new float[]   
+                               { 1.026f, 0.0152f, 0.722f, 0, 0,
+                                 0.126f, 0.102f, 0.722f, 0, 0,
+                                 0.139f, 0.002f, 0.122f, 0, 0,
+                                 0,             0,       0, 1, 0  });
+
+
+        return cf;
+    }
+
+    private SKColorFilter ApplyInvert(float factor)
+    {
+
+        float[] matrixValues = new float[20]{
+                                  1.0f, 0.769f, 0.189f, 0.0f, 0.0f,
+                                  0.349f, 1.0f, 0.168f, 0.0f, 0.0f,
+                                  0.272f, 0.534f, 1.0f, 0.0f, 0.0f,
+                                  0.0f,   0.0f,   0.0f,   1.0f, 0.0f };
+
+
+        for (int i = 0; i < 3; i++)
+        {
+            matrixValues[i] *= factor;
+        }
+
+        var cf = SKColorFilter.CreateColorMatrix(matrixValues);
+
+        return cf;
+    }
+
+
+
+    private SKColorFilter ApplyBrightnesMatrix(float curval)
+    {
+
+        float[] BrightnessArray = new float[] {
+                                            curval, 0, 0, 0, 0,
+                                            0, curval, 0, 0, 0,
+                                            0, 0, curval, 0, 0,
+                                             0, 0, 0, 1, 0
+                    };
+
+        var cf = SKColorFilter.CreateColorMatrix(BrightnessArray);
+        return cf;
+    }
+
+
+    private SKColorFilter ApplyContrastMatrix(float curval)
+    {
+        // float contrast = 1.5f; // Increase the contrast by 50%
+        float brightness = 0; // Don't change the brightness
+        float factor = (1.0f - curval) / 2.0f;
+        float[] matrixValues = new float[] {curval, 0, 0, 0, brightness,
+                                            0, curval, 0, 0, brightness,
+                                            0, 0, curval, 0, brightness,
+                                            0, 0, 0,      1, 0 };
+
+        for (int i = 0; i < 3; i++)
+        {
+            matrixValues[i * 5] += factor;
+            matrixValues[i * 5 + 4] += factor;
+        }
+
+        var cf = SKColorFilter.CreateColorMatrix(matrixValues);
+        return cf;
+    }
+
+    private SKColorFilter ApplySephiaMatrix()
+    {
+        var cf = SKColorFilter.CreateColorMatrix(new float[]
+                                { 0.393f, 0.769f, 0.189f, 0.0f, 0.0f,
+                                  0.349f, 0.686f, 0.168f, 0.0f, 0.0f,
+                                  0.272f, 0.534f, 0.131f, 0.0f, 0.0f,
+                                  0.0f,   0.0f,   0.0f,   1.0f, 0.0f });
+        return cf;
+    }
+
+    private SKColorFilter ApplyPastel() //https://learn.microsoft.com/en-us/xamarin/xamarin-forms/user-interface/graphics/skiasharp/effects/color-filters
+    {
+        var cf = SKColorFilter.CreateColorMatrix(new float[]  //  light pastel
+                              { 0.75f, 0.25f, 0.25f, 0, 0,
+                                0.25f, 0.75f, 0.25f, 0, 0,
+                                0.25f, 0.25f, 0.75f, 0, 0,
+                                1, 0, 0, 1, 0 });
+        return cf;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // very GOOD https://learn.microsoft.com/en-us/xamarin/xamarin-forms/user-interface/graphics/skiasharp/effects/color-filters
+    /*
+    using (var cf =  SKColorFilter.CreateColorMatrix(new float[] // Grayscale works fine ***
+          { 0.21f, 0.72f, 0.07f, 0, 0,
+          0.21f, 0.72f, 0.07f, 0, 0,
+    0.21f, 0.72f, 0.07f, 0, 0,
+    0,     0,     0,     1, 0  }))
+    */
+
+
+
+
+
+    async Task onslider1change(ChangeEventArgs e)
+    {
+        string xx = e.Value.ToString();
+        try { slidervalue1 = (float)Convert.ToDouble(xx); } catch { }
+        skiaView.Invalidate();
+
+        /*
+        if (curfilter == FilterType.Filtertypes.colortransformation)
+            {
+            // ColorAdjustment(slidervalue1, slidervalue2, slidervalue3);
+            skiaView.Invalidate();
+        }
+        */
+
+    }
+
+    async Task onslider2change(ChangeEventArgs e)
+    {
+        string xx = e.Value.ToString();
+        try { slidervalue2 = (float)Convert.ToDouble(xx); } catch { }
+        skiaView.Invalidate();
+        if (curfilter == FilterType.Filtertypes.colortransformation)
+        {
+
+            //  ColorAdjustment(slidervalue1, slidervalue2, slidervalue3);
+        }
+
+
+    }
+
+    async Task onslider3change(ChangeEventArgs e)
+    {
+        string xx = e.Value.ToString();
+        try { slidervalue3 = (float)Convert.ToDouble(xx); } catch { }
+        skiaView.Invalidate();
+        if (curfilter == FilterType.Filtertypes.colortransformation)
+        {
+
+            //  ColorAdjustment(slidervalue1, slidervalue2, slidervalue3);
+        }
+
+    }
+
+
+    //
+    async Task OnBtnGrayscale(MouseEventArgs e)
+    {
+        curfilter = FilterType.Filtertypes.grayscale; showslider = false;
+        skiaView.Invalidate();
+    }
+
+    async Task OnBtnEmbosed(MouseEventArgs e)
+    {
+        curfilter = FilterType.Filtertypes.embossed; 
+        showslider = false;
+        skiaView.Invalidate();
+    }
+
+
+    async Task OnBtnPosterize(MouseEventArgs e)
+    {curfilter = FilterType.Filtertypes.postarize; showslider = false; 
+
+
+        skiaView.Invalidate();
+    }
+
+
+    async Task Onposterize1(MouseEventArgs e)
+    {
+        curfilter = FilterType.Filtertypes.postarizestyles;
+        showslider = false;
+        jazzstyle = true;
+        retrostyle = false;
+        vintagestyle = false;
+        randomstyle = false;
+        skiaView.Invalidate();
+    }
+
+    async Task Onposterize2(MouseEventArgs e)
+    {
+        curfilter = FilterType.Filtertypes.postarizestyles;
+        jazzstyle = false;
+        retrostyle = true;
+        vintagestyle = false;
+        randomstyle = false;
+        showslider = false;
+        skiaView.Invalidate();
+    }
+
+    async Task Onposterize3(MouseEventArgs e)
+    {
+        curfilter = FilterType.Filtertypes.postarizestyles;
+        jazzstyle = false;
+        retrostyle = false;
+        vintagestyle = true;
+        randomstyle = false;
+        showslider = false;
+        skiaView.Invalidate();
+    }
+
+    //
+
+    async Task Onposterize4(MouseEventArgs e)
+    {
+        curfilter = FilterType.Filtertypes.postarizestyles;
+        jazzstyle = false;
+        retrostyle = false;
+        vintagestyle = true;
+        randomstyle = true;
+        showslider = false;
+        skiaView.Invalidate();
+    }
+    //
+    
+
+    
+
+    
+
+    async Task onbtnblul(MouseEventArgs e)
+    {
+        curfilter = FilterType.Filtertypes.blur;
+        slider1Minval = 1;
+        slider1Maxval = 5;
+        slider1Default = 3;
+        slider1Step = 0.8f;
+
+        slider2Minval = 1;
+        slider2Maxval = 5;
+        slider2Default = 3;
+        slider2Step = 0.8f;
+        slidervalue1 = 2.0f;
+        slidervalue2 = 2.0f;
+
+        showslider = true;
+        skiaView.Invalidate();
+    }
+
+
+    async Task OnBtnContrast(MouseEventArgs e)
+    {
+        curfilter = FilterType.Filtertypes.highcontrast;
+        slider1Minval = 0;
+        slider1Maxval = 255;
+        slider1Default = 80;
+        slider1Step = 1.0f;
+        slidervalue1 = 80.0f;
+        showslider = true;
+        skiaView.Invalidate();
+    }
+    //
+
+    async Task OnBtnShephia(MouseEventArgs e)
+    {
+        curfilter = FilterType.Filtertypes.shepia;
+        //curvalue = 0.115f;
+        showslider = false;
+        skiaView.Invalidate();
+    }
+
+
+
+    async Task OnBtnOil(MouseEventArgs e)
+    {
+        curfilter = FilterType.Filtertypes.oilpaint;
+        showslider = false;
+        skiaView.Invalidate();
+    }
+
+    async Task OnBtnRandom(MouseEventArgs e)
+    {
+        curfilter = FilterType.Filtertypes.randommatrix;
+        showslider = false;
+        skiaView.Invalidate();
+    }
+
+    async Task OnBtnPastel(MouseEventArgs e)
+    {
+        curfilter = FilterType.Filtertypes.pastel;
+        showslider = false;
+        skiaView.Invalidate();
+    }
+
+    async Task OnBtnSketck1(MouseEventArgs e)
+    {
+        curfilter = FilterType.Filtertypes.sketch1;
+        showslider = false;
+        skiaView.Invalidate();
+    }
+    //
+    async Task OnBtnSketck3(MouseEventArgs e)
+    {
+        curfilter = FilterType.Filtertypes.sketch3;
+        showslider = true;
+        slider1Minval = 164.0f;
+        slider1Maxval = 168.00f;
+        slider1Default = 166.00f;
+        slider1Step = 1.0f;
+        slidervalue1 = slider1Default;
+
+        slider2Minval = 195.0f;
+        slider2Maxval = 199.00f;
+        slider2Default = 197.00f;
+        slider2Step = 1.0f;
+        slidervalue2 = slider2Default;
+
+        slider3Minval = 97.0f;
+        slider3Maxval = 99.00f;
+        slider3Default = 98.00f;
+        slider3Step = 1.0f;
+        slidervalue3 = slider3Default;
+        skiaView.Invalidate();
+    }
+
+    async Task ondilate(MouseEventArgs e)
+    {
+        curfilter = FilterType.Filtertypes.dilate;
+        //curvalue = 1.115f;
+        curvalue *= 1.3f;
+        showslider = false;
+        skiaView.Invalidate();
+    }
+
+    async Task onlowlevel1(MouseEventArgs e)
+    {
+        curfilter = FilterType.Filtertypes.sketch2;
+        showslider = true;
+        skiaView.Invalidate();
+    }
+
+
+    async Task onBtnEdge(MouseEventArgs e)
+    {
+        curfilter = FilterType.Filtertypes.edge;
+        showslider = false;
+        skiaView.Invalidate();
+    }
+    async Task onbtnbright(MouseEventArgs e)
+    {
+        curfilter = FilterType.Filtertypes.brightness;
+        showslider = true;
+        slider1Minval = 0.8f;
+        slider1Maxval = 6.00f;
+        slider1Default = 1.00f;
+        slider1Step = 0.30f;
+        slidervalue1 = 1.00f;
+        skiaView.Invalidate();
+
+    }
+
+    async Task onBtnContrast(MouseEventArgs e)
+    {
+        curfilter = FilterType.Filtertypes.contrast;
+        showslider = true;
+        slider1Minval = 0.10f;
+        slider1Maxval = 10.00f;
+        slider1Default = 1.50f;
+        slider1Step = 0.10f;
+        slidervalue1 = slider1Default;
+        skiaView.Invalidate();
+
+    }
+
+
+
+    void onBtnColorTransformation(MouseEventArgs e)
+    {
+        curfilter = FilterType.Filtertypes.colortransformation;
+        showslider = true;
+
+        slider1Minval = 1;  // hue
+        slider1Maxval = 360;
+        slider1Default = 1.0f;
+        slider1Step = 0.10f;
+        slidervalue1 = 1.0f;
+
+        slider2Minval = 0.0f;  // saturnation
+        slider2Maxval = 100.0f;
+        slider2Default = 0.5f;
+        slider2Step = 0.005f;
+        slidervalue2 = 0.5f;
+
+        slider3Minval = 0.5f;  // luminository
+        slider3Maxval = 100.0f;
+        slider3Default = 0.5f;
+        slider3Step = 0.005f;
+        slidervalue2 = 0.5f;
+        skiaView.Invalidate();
+    }
+
+
+    void OnPointerDown(PointerEventArgs e)
+    {
+        /*
+        touchLocation = new SKPoint((float)e.OffsetX, (float)e.OffsetY);
+        xpos = touchLocation.Value.X.ToString();
+        ypos = touchLocation.Value.Y.ToString();
+    */
+    }
+
+    void OnPointerMove(PointerEventArgs e)
+    {
+        /*
+        if (touchLocation == null)
+        return;
+
+        touchLocation = new SKPoint((float)e.OffsetX, (float)e.OffsetY);
+    */
+    }
+
+    void OnPointerUp(PointerEventArgs e)
+    {
+        //touchLocation = null;
+    }
+
+        /*
+        async Task onsliderchange(ChangeEventArgs e)
+        {
+        string xx = e.Value.ToString();
+            switch (curfilter)
+            {
+                case FilterType.Filtertypes.highcontrast:
+
+                try { curvalue = (float)Convert.ToDouble(xx); } catch { }
+            break;
+
+
+                case FilterType.Filtertypes.blur:
+                try { curvalue = (float)Convert.ToDouble(xx);  }
+                catch { }
+            break;
+
+            case FilterType.Filtertypes.dilate:
+                try { curvalue = (float)Convert.ToDouble(xx); curvalue *= 1.8f; }
+                catch { }
+        break;
+
+    }
+
+    }
+    */
+
+    private async Task DownloadFileFromStream()
+    {
+        try
+        {
+            SKImage image = SKImage.FromEncodedData(snapshot); // I create image from surface giati h userbitp den allaje apo ta fitra
+
+            SKEncodedImageFormat ftype = SKEncodedImageFormat.Jpeg;  //   do UI gia epilogh  typw arxeiou jpg ...
+            int qual = 100;
+            var extn = ftype.ToString();
+            SKData imgdata = image.Encode(ftype, qual); // to 100 = quatity test work fine
+                                                        //  SKData encoded = image.Encode(SKEncodedImageFormat.Png, 100); // problem
+
+            // get a stream over the encoded data
+            Stream fileStream = imgdata.AsStream();
+
+            var fileName = Guid.NewGuid()+  "_ImageIng."+extn;
+            using var streamRef = new DotNetStreamReference(stream: fileStream);
+            await JS.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
+        }
+        catch (Exception er) { ErrorMessage = er.Message; }
+    }
+
+   
+
+
+    /*
+      
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+    }
+    */
+
+
+
+
+
+
+
+
+
+    /*
+     * 
+    canvas.Clear(SKColors.White);
+                            int brightness = 10;
+                            for (int xx = 0; xx < USerskbitmap.Width; xx++)
+                            {
+                                for (int yy = 0; yy < USerskbitmap.Height; yy++)
+                                {
+                                    SKColor pixel = USerskbitmap.GetPixel(xx, yy);
+                                    // var red = pixel.Red;
+                                    // var green = pixel.Green;
+                                    //var blue = pixel.Blue;
+                                    //  var alpha = pixel.Alpha;
+                                    //byte dif = 50;
+                                    // byte difred = (byte)(red + dif);
+                                    // byte difgreen = (byte)(green + dif);
+                                    //  byte difblue = (byte)(blue + dif);
+                                    // var newPixel = new SKColor(difred, difgreen, difblue, alpha);
+
+                                    byte cR =(byte)(pixel.Red + brightness);
+                                    byte cG = (byte)(pixel.Green + brightness);
+                                    byte cB = (byte)(pixel.Blue + brightness);
+
+                                    //var nr = pixel.WithRed(cR);
+                                    //var ng = pixel.WithGreen(cG);
+                                    //var nb = pixel.WithBlue(cB);
+
+
+
+                                    if (cR < 0) cR = 1;
+                                    if (cR > 255) cR = 255;
+
+                                    if (cG < 0) cG = 1;
+                                    if (cG > 255) cG = 255;
+
+                                    if (cB < 0) cB = 1;
+                                    if (cB > 255) cB = 255;
+
+                                    SKColor nc = new SKColor(cR, cG, cB);
+
+                                    USerskbitmap.SetPixel(xx, yy, nc);
+                                    // USerskbitmap.SetPixel(xx, yy, SKColor.FromHsl((byte)nr, (byte)ng, (byte)nb));  //FromHsv
+                                    // USerskbitmap.SetPixel(xx, yy, SKColor.FromHsl(nr, ng, nb);
+                                    // USerskbitmap.SetPixel(xx, yy, newPixel);  // USerskbitmap affect directly
+
+
+
+    */
+
+
+
+  
+
+
+
+
+}
+

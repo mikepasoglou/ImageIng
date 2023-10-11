@@ -1,0 +1,129 @@
+﻿@page "/"
+
+
+
+<style>
+    body {
+        /*background-color: antiquewhite; */
+        background-image: url(../images/bgimg3.jpg)
+    }
+
+</style>
+
+
+
+<PageTitle>Index</PageTitle>
+<head>
+
+</head>
+<body> 
+
+<h1>ImageIng</h1>
+
+Welcome to ImageIng
+
+<!-- Button trigger modal -->
+<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModalLong">
+    Info
+</button>
+
+<!-- Modal -->
+<div class="modal fade" id="exampleModalLong" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLongTitle">Hello </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                Image Proccessing App 
+                By Mike 
+                <br />
+                Application Under Constraction !!!!!!!!!!
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <!--<button type="button" class="btn btn-primary">Save changes</button> -->
+                
+            </div>
+        </div>
+    </div>
+</div>
+
+    <SKGLView OnPaintSurface="OnCanvasViewPaintSurface" IgnorePixelScaling="true" EnableRenderLoop="false" style="width:600px;height:500px;" />
+
+
+
+
+
+</body>
+
+
+@code
+{
+    string text = "Mike ImageIng";
+    SKPaint textPaint = new SKPaint
+        {
+            Style = SKPaintStyle.Stroke,
+            Color = SKColors.Black,
+            TextSize = 100,
+            StrokeWidth = 4,
+        };
+    SKRect rectTextBounds;
+
+
+
+    void OnCanvasViewPaintSurface(SKPaintGLSurfaceEventArgs args)
+    {
+
+        
+        textPaint.MeasureText(text, ref rectTextBounds);
+        SKImageInfo info = args.Info;
+        SKSurface surface = args.Surface;
+        SKCanvas canvas = surface.Canvas;
+        canvas.Clear();
+        // Find center of canvas
+        float xCenter = info.Width / 2;
+        float yCenter = info.Height / 2;
+
+        // Translate center to origin
+        SKMatrix matrix = SKMatrix.CreateTranslation(-xCenter, -yCenter);
+
+        // Scale so text fits
+        float scale = Math.Min(info.Width / rectTextBounds.Width,
+                               info.Height / rectTextBounds.Height);
+        SKMatrix.PostConcat(ref matrix, SKMatrix.MakeScale(scale, scale));
+
+        // Calculate composite 3D transforms
+        float depth = 0.75f * scale * rectTextBounds.Width;
+
+        SKMatrix44 matrix44 = SKMatrix44.CreateIdentity();
+        matrix44.PostConcat(SKMatrix44.CreateRotationDegrees(1, 0, 0, 0));
+        matrix44.PostConcat(SKMatrix44.CreateRotationDegrees(0, 1, 0, 0));
+        matrix44.PostConcat(SKMatrix44.CreateRotationDegrees(0, 0, 1, 10));
+
+        SKMatrix44 perspectiveMatrix = SKMatrix44.CreateIdentity();
+        perspectiveMatrix[3, 2] = -1 / depth;
+        matrix44.PostConcat(perspectiveMatrix);
+
+        // Concatenate with 2D matrix
+        SKMatrix.PostConcat(ref matrix, matrix44.Matrix);
+
+        // Translate back to center
+        SKMatrix.PostConcat(ref matrix,SKMatrix.MakeTranslation(xCenter, yCenter));
+
+        // Set the matrix and display the text
+        canvas.SetMatrix(matrix);
+        float xText = xCenter - rectTextBounds.MidX;
+        float yText = yCenter - rectTextBounds.MidY;
+        canvas.DrawText(text, xText, yText, textPaint);
+    }
+
+
+
+
+
+            
+     }
